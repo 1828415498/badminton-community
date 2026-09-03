@@ -1,0 +1,25 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Build
+ target/
+out/
+*.class
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local environment / secrets
+.env
+*.local.yml
+*.local.yaml
+
+# CodeBuddy local settings
+.codebuddy/settings.local.json
