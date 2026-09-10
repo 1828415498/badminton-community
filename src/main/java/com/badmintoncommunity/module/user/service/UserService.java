@@ -2,6 +2,7 @@ package com.badmintoncommunity.module.user.service;
 
 import com.badmintoncommunity.common.BusinessException;
 import com.badmintoncommunity.common.ResultCode;
+import org.springframework.dao.DuplicateKeyException;
 import com.badmintoncommunity.module.user.dto.LoginRequest;
 import com.badmintoncommunity.module.user.dto.LoginResult;
 import com.badmintoncommunity.module.user.dto.RegisterRequest;
@@ -81,7 +82,12 @@ public class UserService {
         user.setNickname(req.getNickname());
         user.setAvatarUrl(null);      // 注册阶段没有头像
         user.setRole(0);              // 注册用户一律普通用户；管理员只能手工/初始化写入（database.md §4.1）
-        userMapper.insert(user);      // MyBatis 自动把 user.id 回填（见 Mapper @Options）
+        try {
+            userMapper.insert(user);      // MyBatis 自动把 user.id 回填（见 Mapper @Options）
+        } catch (DuplicateKeyException e) {
+            // P0 修复：并发同名注册时由唯一索引兜底，需转成友好错误而不是 500
+            throw new BusinessException(ResultCode.USERNAME_TAKEN);
+        }
     }
 
     /**
@@ -137,7 +143,10 @@ public class UserService {
             if (StringUtils.hasText(req.getNickname())) {//用户传递进来的不是空也不是一堆空格
                 user.setNickname(req.getNickname());
             }
-            user.setAvatarUrl(req.getAvatarUrl());
+            // P0 修复：avatar_url 未传（null）时保留原头像，避免只改昵称把头像清空
+            if (req.getAvatarUrl() != null) {
+                user.setAvatarUrl(req.getAvatarUrl());
+            }
 
             userMapper.updateProfile(user);
             return UserVO.from(user);

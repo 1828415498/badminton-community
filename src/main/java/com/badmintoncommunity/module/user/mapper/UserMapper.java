@@ -43,6 +43,14 @@ public interface UserMapper {
     User findById(Long id);
 
     /**
+     * 带排他行锁的按 id 查用户。
+     * 个人预约创建前先锁住本人行，串行化同一用户的并发预约写入（business-flows 动作 3）。
+     */
+    @Select("SELECT id, username, password_hash, nickname, avatar_url, role, create_time, update_time "
+            + "FROM user WHERE id = #{id} FOR UPDATE")
+    User findByIdForUpdate(Long id);
+
+    /**
      * 插入新用户。
      *
      * @param user 入参实体；插入成功后其 id 会被自动回填

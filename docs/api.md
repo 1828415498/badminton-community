@@ -326,8 +326,9 @@ data = {
 
 - `COURT_NOT_FOUND`、`COURT_UNAVAILABLE`（球场不可预约）
 - `INVALID_TIME`（非整点 / end ≤ start / 跨天）
-- `BOOKING_WINDOW_EXCEEDED`（超出未来 7 个自然日窗口，含「最早约明天」边界）
+- `BOOKING_WINDOW_EXCEEDED`（超出未来 7 个自然日窗口，或目标时段尚未开始但已不满足窗口；当天可约但开始时间必须晚于当前时刻）
 - `PERSONAL_RESERVATION_LIMIT_EXCEEDED`（与本人已有有效个人预约时间重叠数已达 2）
+- `COURT_DAILY_DURATION_EXCEEDED`（同一球场同一天的有效个人预约合并连续占用超过 2 小时，requirements 规则 18）
 - `COURT_ALREADY_RESERVED`（该场该时段已有有效占用——个人或活动来源都算）
 
 ### 4.2 查询我的预约
@@ -838,6 +839,7 @@ HTTP 200
 | COURT_UNAVAILABLE | 200 | 球场不可预约（已停用） |
 | COURT_ALREADY_RESERVED | 200 | 该场该时段已被有效占用（个人或活动来源） |
 | PERSONAL_RESERVATION_LIMIT_EXCEEDED | 200 | 本人重叠时段的有效个人预约已达 2 |
+| COURT_DAILY_DURATION_EXCEEDED | 200 | 同一球场当天累计占用超过 2 小时（个人预约，合并连续占用段计算） |
 | RESERVATION_NOT_FOUND | 200 | 预约不存在或非本人 |
 | CANCEL_WINDOW_EXCEEDED | 200 | 开场前不足 4 小时，普通用户不可自行取消 |
 | ACTIVE_RESERVATION_EXISTS | 200 | 球场存在未来有效预约，禁止停用 |
