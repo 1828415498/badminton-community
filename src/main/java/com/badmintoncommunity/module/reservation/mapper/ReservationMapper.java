@@ -127,4 +127,26 @@ public interface ReservationMapper {
     @Select("SELECT COUNT(*) FROM reservation "
             + "WHERE court_id = #{courtId} AND status = 1 AND end_time > #{now}")
     long countFutureEffective(@Param("courtId") Long courtId, @Param("now") LocalDateTime now);
+
+    // ---------- 活动占场（activity_id 归属的行） ----------
+
+    /**
+     * 某活动占用的球场 id 列表（activity.md §5.3 详情回显 court_ids）。
+     *
+     * <p>不过滤 status：活动被驳回/取消后占场行虽然已置为「已取消」，但"这个活动原本占哪几块场"
+     * 仍应能展示给创建者与管理员，因此保留全部历史行。</p>
+     */
+    @Select("SELECT DISTINCT court_id FROM reservation "
+            + "WHERE activity_id = #{activityId} ORDER BY court_id")
+    List<Long> findCourtIdsByActivityId(Long activityId);
+
+    /**
+     * 释放某活动名下全部「有效」占场（activity 取消 / 驳回时级联调用）。
+     *
+     * <p>只更新 status=1 的行，已取消的行不重复写 cancel_time，保证幂等语义正确。</p>
+     */
+    @Update("UPDATE reservation SET status = 2, cancel_time = #{now} "
+            + "WHERE activity_id = #{activityId} AND status = 1")
+    int cancelByActivityId(@Param("activityId") Long activityId,
+                           @Param("now") LocalDateTime now);
 }
