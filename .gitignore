@@ -34,3 +34,6 @@ build/
 
 ### WorkBuddy (AI session memory, not part of source code) ###
 .workbuddy/
+
+### 本机专用脚本（含数据库密码，禁止入库） ###
+fix-mysql-service.ps1
