@@ -40,9 +40,10 @@ public class ReservationController {
     @GetMapping("/mine")
     public Result<PageResult<ReservationVO>> mine(
             @RequestParam(required = false) Integer status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startFrom,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int pageSize) {
+            @RequestParam(name = "start_from", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startFrom,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "page_size", defaultValue = "20") int pageSize) {
         return Result.ok(reservationService.listMine(UserContext.requireUserId(), status, startFrom,
                 Math.max(page, 1), Math.min(Math.max(pageSize, 1), 50)));
     }

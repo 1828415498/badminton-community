@@ -195,4 +195,30 @@ public class ReservationService {
         }
         return vo;
     }
+
+    /**
+     * 管理员强制取消个人预约（api.md 第 8 章，requirements 规则 11）。
+     *
+     * <p>与用户自助取消（{@link #cancel}）的唯一差别：<b>不受"开场前 4 小时"窗口限制</b>。
+     * 用于场地临时维修、用户投诉等特殊情况。</p>
+     *
+     * <p>只处理个人行：活动占场行的释放属于"取消活动"的职责（会连带作废全部报名），
+     * 若从这里单独取消某条占场，会造成"活动还在但场地没了"的不一致。</p>
+     */
+    @Transactional
+    public ReservationVO cancelByAdmin(LoginUser me, Long reservationId) {
+        if (me == null || me.role() == null || me.role() != 1) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+        Reservation reservation = reservationMapper.findById(reservationId);
+        // 不存在 / 非个人行，统一按"找不到"处理（与用户侧语义一致，不泄露存在性）
+        if (reservation == null || reservation.getActivityId() != null) {
+            throw new BusinessException(ResultCode.RESERVATION_NOT_FOUND);
+        }
+        // 幂等：已取消则直接回显当前状态，不重复写 cancel_time
+        if (reservation.getStatus() != 2) {
+            reservationMapper.cancel(reservationId, LocalDateTime.now());
+        }
+        return reservationMapper.findVOById(reservationId);
+    }
 }
