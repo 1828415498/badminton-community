@@ -16,6 +16,15 @@ defineProps({
   value: { type: [String, Number], required: true },
   unit: { type: String, default: '' },
   label: { type: String, default: '' },
+  /**
+   * 'below' | 'before'
+   *
+   * below —— 标签在数字下一行（报表/看板里的常规排版，如「总场次 / 128」）。
+   * before —— 标签在数字**前面同一行**。中文里「还差 7 人」是一个固定语序，
+   *          标签放到下一行会读成「7 人 / 还差」，得从下往上读才对 ——
+   *          球局行必须用 before。
+   */
+  labelPosition: { type: String, default: 'below' },
   /** md 26px / lg 40px / xl 56px */
   size: { type: String, default: 'md' },
   /** ink 常规 / brand 荧光笔强调 / quiet 弱化 */
@@ -26,10 +35,11 @@ defineProps({
 <template>
   <div class="app-stat" :class="[`app-stat--${size}`, `app-stat--${tone}`]">
     <div class="app-stat__row">
+      <span v-if="label && labelPosition === 'before'" class="app-stat__pre">{{ label }}</span>
       <span class="app-stat__value tnum">{{ value }}</span>
       <span v-if="unit" class="app-stat__unit">{{ unit }}</span>
     </div>
-    <p v-if="label" class="app-stat__label">{{ label }}</p>
+    <p v-if="label && labelPosition === 'below'" class="app-stat__label">{{ label }}</p>
   </div>
 </template>
 
@@ -52,6 +62,13 @@ defineProps({
   font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--ink-3);
+}
+
+/* labelPosition="before"：与数字同基线，中文语序「还差 7 人」 */
+.app-stat__pre {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  white-space: nowrap;
 }
 
 .app-stat__label {

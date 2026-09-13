@@ -18,32 +18,32 @@ defineProps({
 </script>
 
 <template>
-  <div class="es">
-    <RallyArc v-if="arc" class="es__arc" tone="line" />
-    <div v-else class="es__mark"><slot name="icon" /></div>
+  <div class="empty-state">
+    <RallyArc v-if="arc" class="empty-state__arc" tone="line" />
+    <div v-else class="empty-state__mark"><slot name="icon" /></div>
 
-    <h3 class="es__title">{{ title }}</h3>
-    <p v-if="description" class="es__desc">{{ description }}</p>
+    <h3 class="empty-state__title">{{ title }}</h3>
+    <p v-if="description" class="empty-state__desc">{{ description }}</p>
 
-    <div v-if="$slots.default" class="es__actions">
+    <div v-if="$slots.default" class="empty-state__actions">
       <slot />
     </div>
   </div>
 </template>
 
 <style scoped>
-.es {
+.empty-state {
   padding: var(--s6) var(--s5) var(--s7);
   text-align: center;
 }
 
-.es__arc {
+.empty-state__arc {
   max-width: 320px;
   margin: 0 auto var(--s5);
   opacity: 0.9;
 }
 
-.es__mark {
+.empty-state__mark {
   width: 44px;
   height: 44px;
   margin: 0 auto var(--s4);
@@ -55,21 +55,21 @@ defineProps({
   justify-content: center;
 }
 
-.es__title {
+.empty-state__title {
   margin: 0 0 var(--s1);
   font-size: var(--fs-h3);
   font-weight: 600;
   color: var(--ink);
 }
 
-.es__desc {
+.empty-state__desc {
   margin: 0 auto;
   max-width: 360px;
   font-size: var(--fs-sm);
   color: var(--ink-3);
 }
 
-.es__actions {
+.empty-state__actions {
   display: flex;
   align-items: center;
   justify-content: center;

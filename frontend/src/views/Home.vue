@@ -38,72 +38,8 @@ const posts = ref([])
 const venue = ref(null)
 const courtCount = ref(0)
 
-// ---------- 时间工具 ----------
-function pad(n) {
-  return String(n).padStart(2, '0')
-}
-
-function startOf(daysAhead = 0) {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() + daysAhead)
-  return d
-}
-
-function endOf(daysAhead = 0) {
-  const d = startOf(daysAhead)
-  d.setHours(23, 59, 59, 0)
-  return d
-}
-
-function iso(d) {
-  return (
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-    `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-  )
-}
-
-const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-
-/** 与 ActivityRow 同一套解析逻辑：两种分隔符都要吃得下 */
-function parseTime(s) {
-  if (!s) return null
-  const [d, t = '00:00:00'] = String(s).replace('T', ' ').split(' ')
-  const [Y, M, D] = d.split('-').map(Number)
-  const [h, m] = t.split(':').map(Number)
-  if (!Y || !M || !D) return null
-  return { date: new Date(Y, M - 1, D, h, m), h, m }
-}
-
-/**
- * 天数差只比年月日：拿带时分的时间减零点会得到 1.79 天，四舍五入进成 2，
- * 明天就变成"后天"。
- */
-function dayDiff(d) {
-  const a = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-  return Math.round((a - startOf(0).getTime()) / 86400000)
-}
-
-/**
- * 后端公开列表是 ORDER BY start_time DESC（最新发布在前）。
- * 对于"接下来几天"这种发现型列表，应该是**最近的排最前**，所以在展示层重排。
- * 时间格式固定为 "YYYY-MM-DD HH:mm:ss"，同一长度下字典序即时间序，不用构造 Date。
- */
-function normTime(s) {
-  return String(s || '').replace('T', ' ').slice(0, 19)
-}
-
-function sortByStartAsc(list) {
-  return [...(list || [])].sort((a, b) => normTime(a.start_time).localeCompare(normTime(b.start_time)))
-}
-
-function miniWhen(a) {
-  const s = parseTime(a.start_time)
-  if (!s) return ''
-  const diff = dayDiff(s.date)
-  const day = diff === 0 ? '今天' : diff === 1 ? '明天' : diff === 2 ? '后天' : WEEK[s.date.getDay()]
-  return `${day} ${pad(s.h)}:${pad(s.m)}`
-}
+// 时间工具统一从 @/utils/datetime 取（原先这里和 ActivityRow 各有一份副本）
+import { startOf, endOf, iso, sortByStartAsc, whenShort } from '@/utils/datetime'
 
 function fillRatio(a) {
   if (!a.max_members) return 0
@@ -290,7 +226,7 @@ onMounted(load)
             :class="{ 'is-first': i === 0 }"
             :to="`/activities/${a.id}`"
           >
-            <span class="mini__when tnum">{{ miniWhen(a) }}</span>
+            <span class="mini__when tnum">{{ whenShort(a.start_time) }}</span>
             <span class="mini__title">{{ a.title }}</span>
             <span class="mini__fill">
               <AppBadge v-if="fillRatio(a) >= 0.75 && a.joined_count < a.max_members" kind="pending" :plain="true">

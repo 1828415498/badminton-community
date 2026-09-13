@@ -18,15 +18,25 @@ function isActive(item) {
   return route.path === item.to || route.path.startsWith(item.to + '/')
 }
 
-// 导航项。用 router-link 的 active-class 判断高亮，
-// 子路径（/activities/new）会自动归到 /activities 上。
-// 首页排第一位：产品的第一个动作是"发现球局"，不是"管理预约"。
+/*
+  导航只放 4 项，对应产品真正要用户做的三件事：
+  发现球局（球局）→ 自己开局（场地）→ 认识球友（社区），首页是它们的总入口。
+
+  刻意去掉了「我的预约」：它与「个人资料」同属"我的 ×"，收进右上角用户菜单。
+  改造前是 5 个平级入口 + 用户菜单，桌面端和移动端都出现"哪个都一样重、
+  不知道该看哪"的问题 —— 这是"所有模块视觉权重一样"的结构性来源。
+  移动端底部 Tab 也刚好是 4 项，是拇指操作最舒服的数量。
+*/
 const NAV = [
   { to: '/home', label: '首页', icon: 'HomeFilled' },
-  { to: '/venues', label: '场馆预约', icon: 'Grid' },
-  { to: '/reservations', label: '我的预约', icon: 'Calendar' },
-  { to: '/activities', label: '活动', icon: 'Trophy' },
+  { to: '/activities', label: '球局', icon: 'Trophy' },
+  { to: '/venues', label: '场地', icon: 'Grid' },
   { to: '/community', label: '社区', icon: 'ChatLineSquare' }
+]
+
+const MENU = [
+  { cmd: 'reservations', label: '我的预约', icon: 'Calendar' },
+  { cmd: 'profile', label: '个人资料', icon: 'User' }
 ]
 
 async function handleLogout() {
@@ -37,6 +47,7 @@ async function handleLogout() {
 
 function handleCommand(cmd) {
   if (cmd === 'logout') handleLogout()
+  else if (cmd === 'reservations') router.push('/reservations')
   else router.push('/profile')
 }
 </script>
@@ -86,8 +97,8 @@ function handleCommand(cmd) {
           </button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="profile">
-                <el-icon><User /></el-icon>个人资料
+              <el-dropdown-item v-for="m in MENU" :key="m.cmd" :command="m.cmd">
+                <el-icon><component :is="m.icon" /></el-icon>{{ m.label }}
               </el-dropdown-item>
               <el-dropdown-item command="logout" divided>
                 <el-icon><SwitchButton /></el-icon>退出登录

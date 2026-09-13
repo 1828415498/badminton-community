@@ -20,11 +20,11 @@ const rest = computed(() => Math.max(0, props.users.length - props.max))
 </script>
 
 <template>
-  <div v-if="users.length" class="stack" :aria-label="`共 ${users.length} 位球友`">
+  <div v-if="users.length" class="stack-root" :aria-label="`共 ${users.length} 位球友`">
     <AppAvatar
       v-for="(u, i) in shown"
       :key="u.id ?? i"
-      class="stack__item"
+      class="stack-root__item"
       :size="size"
       :src="u.avatar_url"
       :name="u.nickname"
@@ -32,7 +32,7 @@ const rest = computed(() => Math.max(0, props.users.length - props.max))
     />
     <span
       v-if="rest"
-      class="stack__item stack__more tnum"
+      class="stack-root__item stack-root__more tnum"
       :style="{ width: size + 'px', height: size + 'px', fontSize: Math.round(size * 0.38) + 'px' }"
     >
       +{{ rest }}
@@ -41,20 +41,21 @@ const rest = computed(() => Math.max(0, props.users.length - props.max))
 </template>
 
 <style scoped>
-.stack {
+/* 根类名带命名空间：父页面的 .stack 会直接命中组件根元素（见 ActivityRow 的说明） */
+.stack-root {
   display: flex;
   align-items: center;
 }
 
-.stack__item {
+.stack-root__item {
   margin-left: -8px;
 }
 
-.stack__item:first-child {
+.stack-root__item:first-child {
   margin-left: 0;
 }
 
-.stack__more {
+.stack-root__more {
   display: inline-flex;
   align-items: center;
   justify-content: center;

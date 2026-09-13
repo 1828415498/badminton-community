@@ -215,6 +215,7 @@ const PALETTE = [
     <section class="blk">
       <h2 class="blk__head">大数字</h2>
       <div class="row row--top">
+        <StatNumber value="2" unit="人" label="还差" label-position="before" size="lg" tone="brand" />
         <StatNumber value="2" unit="人" label="还差" size="lg" tone="brand" />
         <StatNumber value="6" unit="/ 8" label="已报名" size="lg" />
         <StatNumber value="12" unit="场" label="我打过" size="md" />
@@ -222,6 +223,8 @@ const PALETTE = [
       </div>
       <p class="micro">
         brand 强调用「荧光笔划线」而不是品牌色文字 —— 荧光色当文字对比度不足 3:1。
+        第一、二项对比 <code>label-position</code> 的 before / below：
+        中文「还差 2 人」是固定语序，标签放下一行会读成「2 人 / 还差」。
       </p>
     </section>
 
