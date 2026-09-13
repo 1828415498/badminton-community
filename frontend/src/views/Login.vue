@@ -1,36 +1,34 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import { AppInput, AppButton } from '@/components'
 
 const router = useRouter()
 const route = useRoute()
 const store = useUserStore()
 
 const form = reactive({ username: '', password: '' })
-const error = ref('')
+const errors = reactive({ username: '', password: '' })
 const loading = ref(false)
 
+// 从注册页跳过来时带着用户名，直接填好，少打一次字
+onMounted(() => {
+  if (route.query.username) form.username = String(route.query.username)
+})
+
 /**
- * 轻量前端校验：只挡明显的手误（空值 / 太短），
- * 真正的判定（用户名不存在、密码错误）由后端负责。
+ * 校验规则以后端契约为准（LoginRequest：两者都只要求非空）。
+ * ⚠️ 上一版这里有一条"用户名至少 3 个字符"——那是前端**自造**的规则，
+ * 后端并没有。自造规则会造出"接口能过、界面过不了"的不一致，已去掉。
+ *
+ * 错误逐字段就近显示，而不是笼统地报一句"请输入用户名和密码"。
  */
 function validate() {
-  if (!form.username || !form.password) {
-    error.value = '请输入用户名和密码'
-    return false
-  }
-  if (form.username.trim().length < 3) {
-    error.value = '用户名至少 3 个字符'
-    return false
-  }
-  if (form.password.length < 6) {
-    error.value = '密码至少 6 位'
-    return false
-  }
-  error.value = ''
-  return true
+  errors.username = form.username.trim() ? '' : '请输入用户名'
+  errors.password = form.password ? '' : '请输入密码'
+  return !errors.username && !errors.password
 }
 
 async function submit() {
@@ -40,7 +38,7 @@ async function submit() {
   try {
     await store.login(form.username.trim(), form.password)
     ElMessage.success('登录成功')
-    router.push(route.query.redirect || '/venues')
+    router.push(route.query.redirect || '/')
   } catch (e) {
     // 具体失败原因（凭据错误等）已由 axios 拦截器统一提示
   } finally {
@@ -51,14 +49,15 @@ async function submit() {
 function fillDemo() {
   form.username = 'admin123'
   form.password = '123456'
-  error.value = ''
+  errors.username = ''
+  errors.password = ''
 }
 </script>
 
 <template>
   <div class="signin-page">
     <div class="signin-card">
-      <!-- 顶部图标块 -->
+      <!-- 顶部图标块：品牌色填充 + 墨色图标，第一屏最直接的品牌露出 -->
       <div class="icon-tile">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round">
@@ -68,56 +67,51 @@ function fillDemo() {
         </svg>
       </div>
 
-      <h2 class="title">欢迎回来</h2>
-      <p class="subtitle">登录后即可预约场地、报名活动、和球友交流</p>
+      <h1 class="title">欢迎回来</h1>
+      <p class="subtitle">登录后就能找到下一场球局，认识常来这个球馆的人</p>
 
       <div class="fields">
-        <div class="field">
-          <span class="field-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
+        <AppInput
+          v-model="form.username"
+          placeholder="用户名"
+          autocomplete="username"
+          :error="errors.username"
+          @keyup.enter="submit"
+        >
+          <template #prefix>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
-          </span>
-          <input
-            v-model="form.username"
-            class="input"
-            placeholder="用户名"
-            autocomplete="username"
-            @keyup.enter="submit"
-          />
-        </div>
+          </template>
+        </AppInput>
 
-        <div class="field">
-          <span class="field-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
+        <AppInput
+          v-model="form.password"
+          type="password"
+          placeholder="密码"
+          autocomplete="current-password"
+          :error="errors.password"
+          @keyup.enter="submit"
+        >
+          <template #prefix>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
-          </span>
-          <input
-            v-model="form.password"
-            class="input"
-            type="password"
-            placeholder="密码"
-            autocomplete="current-password"
-            @keyup.enter="submit"
-          />
-        </div>
+          </template>
+        </AppInput>
 
-        <div class="error-row">
-          <span v-if="error" class="error-text">{{ error }}</span>
-          <button type="button" class="link-btn" @click="router.push('/register')">
+        <div class="row">
+          <button type="button" class="link" @click="router.push('/register')">
             还没有账号？注册
           </button>
         </div>
       </div>
 
-      <button type="button" class="submit-btn" :disabled="loading" @click="submit">
-        {{ loading ? '登录中…' : '登 录' }}
-      </button>
+      <AppButton variant="primary" block :loading="loading" @click="submit">登 录</AppButton>
 
       <div class="divider">
         <span class="divider-line" />
@@ -125,7 +119,7 @@ function fillDemo() {
         <span class="divider-line" />
       </div>
 
-      <button type="button" class="demo-btn" @click="fillDemo">填入演示账号</button>
+      <AppButton variant="outline" block @click="fillDemo">填入演示账号</AppButton>
 
       <p class="foot-hint">开发环境初始账号 admin123 / 123456</p>
     </div>
@@ -133,219 +127,119 @@ function fillDemo() {
 </template>
 
 <style scoped>
-/* ── 页面：纯白底 + 居中 ───────────────────────────────── */
+/* 与 Register.vue 同一套视觉；输入框与按钮已由 AppInput / AppButton 提供，
+   这里只保留卡片骨架，不再重复定义字段样式。 */
+
 .signin-page {
   min-height: 100vh;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  padding: 20px;
-  box-sizing: border-box;
+  background: var(--bg);
+  padding: var(--s5);
 }
 
-/* ── 卡片：淡蓝→白渐变 + 24px 圆角 + 大阴影 ─────────────── */
 .signin-card {
   width: 100%;
   max-width: 384px;
-  background: linear-gradient(to bottom, rgba(240, 249, 255, 0.5), #ffffff);
-  border: 1px solid #dbeafe;
-  border-radius: 24px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+  padding: var(--s7) var(--s6) var(--s6);
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-sizing: border-box;
 }
 
 .icon-tile {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: #ffffff;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-md);
+  background: var(--brand);
+  color: var(--brand-ink);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 24px;
+  margin-bottom: var(--s5);
 }
 
 .icon-tile svg {
-  width: 28px;
-  height: 28px;
-  color: #111827;
+  width: 26px;
+  height: 26px;
 }
 
 .title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 8px;
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin: 0 0 var(--s2);
   text-align: center;
 }
 
 .subtitle {
-  font-size: 14px;
-  color: #6b7280;
-  line-height: 1.5;
-  margin: 0 0 24px;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  line-height: 1.55;
+  margin: 0 0 var(--s5);
   text-align: center;
 }
 
-/* ── 输入区 ──────────────────────────────────────────── */
 .fields {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: var(--s3);
+  margin-bottom: var(--s4);
 }
 
-.field {
-  position: relative;
-}
-
-.field-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
+/* 注册入口单独一行靠右 */
+.row {
   display: flex;
-  pointer-events: none;
-}
-
-.field-icon svg {
-  width: 16px;
-  height: 16px;
-}
-
-.input {
-  width: 100%;
-  padding: 9px 12px 9px 40px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  font-size: 14px;
-  color: #111827;
-  outline: none;
-  box-sizing: border-box;
-  font-family: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-}
-
-.input::placeholder {
-  color: #9ca3af;
-}
-
-.input:focus {
-  background: #ffffff;
-  border-color: #bfdbfe;
-  box-shadow: 0 0 0 3px rgba(191, 219, 254, 0.6);
-}
-
-/* 错误提示与注册入口同一行：错误靠左、链接靠右 */
-.error-row {
-  width: 100%;
-  min-height: 18px;
-  display: flex;
-  align-items: center;
   justify-content: flex-end;
-  gap: 8px;
 }
 
-.error-text {
-  font-size: 13px;
-  color: #ef4444;
-  margin-right: auto;
-}
-
-.link-btn {
-  font-size: 12px;
-  color: #6b7280;
+.link {
+  border: 0;
   background: none;
-  border: none;
   padding: 0;
-  cursor: pointer;
   font-family: inherit;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 0.14s;
 }
 
-.link-btn:hover {
-  color: #111827;
+.link:hover {
+  color: var(--ink);
   text-decoration: underline;
 }
 
-/* ── 主按钮：深灰渐变 ─────────────────────────────────── */
-.submit-btn {
-  width: 100%;
-  margin: 8px 0 16px;
-  padding: 10px 0;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(to bottom, #374151, #111827);
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 500;
-  font-family: inherit;
-  letter-spacing: 2px;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  transition: filter 0.15s;
-}
-
-.submit-btn:hover:not(:disabled) {
-  filter: brightness(1.08);
-}
-
-.submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ── 虚线分隔 ────────────────────────────────────────── */
+/* 分隔与次级动作 */
 .divider {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 8px 0;
+  gap: var(--s2);
+  margin: var(--s5) 0 var(--s4);
 }
 
 .divider-line {
   flex: 1;
-  border-top: 1px dashed #e5e7eb;
+  border-top: 1px dashed var(--line-2);
 }
 
 .divider-text {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-/* ── 次级按钮 ────────────────────────────────────────── */
-.demo-btn {
-  width: 100%;
-  margin-top: 8px;
-  padding: 9px 0;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  font-size: 13px;
-  color: #4b5563;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.demo-btn:hover {
-  background: #f3f4f6;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
 }
 
 .foot-hint {
-  margin: 16px 0 0;
-  font-size: 12px;
-  color: #9ca3af;
+  margin: var(--s5) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
   text-align: center;
 }
 </style>

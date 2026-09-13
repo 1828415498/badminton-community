@@ -3,51 +3,61 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { register } from '@/api/auth'
+import { AppInput, AppButton } from '@/components'
 
 const router = useRouter()
-const formRef = ref()
 const loading = ref(false)
 const form = reactive({ username: '', password: '', confirm: '', nickname: '' })
+const errors = reactive({ username: '', nickname: '', password: '', confirm: '' })
 
-const rules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { max: 64, message: '不能超过 64 个字符', trigger: 'blur' }
-  ],
-  nickname: [
-    { required: true, message: '请输入昵称', trigger: 'blur' },
-    { max: 64, message: '不能超过 64 个字符', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码至少 6 位', trigger: 'blur' }
-  ],
-  confirm: [
-    { required: true, message: '请再次输入密码', trigger: 'blur' },
-    {
-      validator: (rule, value, cb) =>
-        value === form.password ? cb() : cb(new Error('两次输入的密码不一致')),
-      trigger: 'blur'
-    }
-  ]
+/**
+ * 逐字段校验，错误就近显示在该字段下方。
+ * 规则以后端契约为准（RegisterRequest）：
+ *   username 非空且 ≤64、nickname 非空且 ≤64、password ≥6。
+ *
+ * ⚠️ 注意不要在这里自造后端没有的规则（比如"用户名至少 3 位"）——
+ * 那会造出"接口能过、界面过不了"的不一致。上一版登录页就有这个问题，已一并去掉。
+ */
+function validate() {
+  errors.username = ''
+  errors.nickname = ''
+  errors.password = ''
+  errors.confirm = ''
+
+  const name = form.username.trim()
+  const nick = form.nickname.trim()
+
+  if (!name) errors.username = '请输入用户名'
+  else if (name.length > 64) errors.username = '用户名不能超过 64 个字符'
+
+  if (!nick) errors.nickname = '请输入昵称'
+  else if (nick.length > 64) errors.nickname = '昵称不能超过 64 个字符'
+
+  if (!form.password) errors.password = '请输入密码'
+  else if (form.password.length < 6) errors.password = '密码至少 6 位'
+
+  if (!form.confirm) errors.confirm = '请再输入一次密码'
+  else if (form.confirm !== form.password) errors.confirm = '两次输入的密码不一致'
+
+  return !errors.username && !errors.nickname && !errors.password && !errors.confirm
 }
 
 async function submit() {
-  const valid = await formRef.value.validate().catch(() => false)
-  if (!valid) return
+  if (!validate()) return
 
   loading.value = true
   try {
-    // 注意：注册接口成功时不返回 token（api.md §2.1），必须再登录一次
+    // 注册接口成功时不返回 token，所以注册完要回登录页再登一次
     await register({
-      username: form.username,
+      username: form.username.trim(),
       password: form.password,
-      nickname: form.nickname
+      nickname: form.nickname.trim()
     })
     ElMessage.success('注册成功，请登录')
-    router.push({ path: '/login', query: { username: form.username } })
+    // 把用户名带回去，登录页会自动填好
+    router.push({ path: '/login', query: { username: form.username.trim() } })
   } catch (e) {
-    // 错误提示由拦截器统一处理
+    // 具体失败原因（用户名已存在等）由 axios 拦截器统一提示
   } finally {
     loading.value = false
   }
@@ -55,107 +65,161 @@ async function submit() {
 </script>
 
 <template>
-  <div class="auth-wrap">
-    <el-card class="auth-card" shadow="never">
-      <div class="auth-head">
-        <span class="brand-mark">羽</span>
-        <h1 class="auth-title">创建账号</h1>
-        <p class="muted">加入羽毛球社区</p>
+  <div class="signup-page">
+    <div class="signup-card">
+      <div class="icon-tile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M19 8v6M22 11h-6" />
+        </svg>
       </div>
 
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" placeholder="登录用，唯一" size="large" />
-        </el-form-item>
+      <h1 class="title">创建账号</h1>
+      <p class="subtitle">注册后就能报名球局、预约场地、和球友聊天</p>
 
-        <el-form-item label="昵称" prop="nickname">
-          <el-input v-model="form.nickname" placeholder="展示给其他球友的名字" size="large" />
-        </el-form-item>
+      <div class="fields">
+        <AppInput
+          v-model="form.username"
+          label="用户名"
+          placeholder="登录用，注册后不可修改"
+          autocomplete="username"
+          :error="errors.username"
+          required
+        />
 
-        <el-form-item label="密码" prop="password">
-          <el-input
-            v-model="form.password"
-            type="password"
-            placeholder="至少 6 位"
-            size="large"
-            show-password
-          />
-        </el-form-item>
+        <AppInput
+          v-model="form.nickname"
+          label="昵称"
+          placeholder="展示给其他球友的名字"
+          autocomplete="nickname"
+          :error="errors.nickname"
+          required
+        />
 
-        <el-form-item label="确认密码" prop="confirm">
-          <el-input
-            v-model="form.confirm"
-            type="password"
-            placeholder="再次输入密码"
-            size="large"
-            show-password
-          />
-        </el-form-item>
+        <AppInput
+          v-model="form.password"
+          label="密码"
+          type="password"
+          placeholder="至少 6 位"
+          autocomplete="new-password"
+          :error="errors.password"
+          required
+        />
 
-        <el-button type="primary" size="large" class="full-btn" :loading="loading" @click="submit">
-          注册
-        </el-button>
-      </el-form>
-
-      <div class="auth-foot">
-        <span class="muted">已有账号？</span>
-        <el-link type="primary" @click="router.push('/login')">返回登录</el-link>
+        <AppInput
+          v-model="form.confirm"
+          label="确认密码"
+          type="password"
+          placeholder="再输入一次"
+          autocomplete="new-password"
+          :error="errors.confirm"
+          required
+          @keyup.enter="submit"
+        />
       </div>
-    </el-card>
+
+      <AppButton variant="primary" block :loading="loading" @click="submit">注册</AppButton>
+
+      <div class="foot">
+        <span>已有账号？</span>
+        <button type="button" class="link" @click="router.push('/login')">返回登录</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.auth-wrap {
+/* 与 Login.vue 同一套视觉：平面白卡 + 发丝线 + 品牌色图标块。
+   两个页面共用令牌与组件，不再各写一套硬编码颜色。 */
+
+.signup-page {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(160deg, #eef4ff 0%, #f5f7fa 60%);
-  padding: 20px;
+  background: var(--bg);
+  padding: var(--s5);
 }
 
-.auth-card {
+.signup-card {
   width: 100%;
   max-width: 400px;
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+  padding: var(--s6);
+  display: flex;
+  flex-direction: column;
 }
 
-.auth-head {
-  text-align: center;
-  margin-bottom: 18px;
-}
-
-.brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 11px;
-  background: #409eff;
-  color: #fff;
-  font-size: 22px;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-
-.auth-title {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0 0 4px;
-}
-
-.full-btn {
-  width: 100%;
-}
-
-.auth-foot {
-  margin-top: 16px;
+.icon-tile {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-md);
+  background: var(--brand);
+  color: var(--brand-ink);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 13px;
+  align-self: center;
+  margin-bottom: var(--s5);
+}
+
+.icon-tile svg {
+  width: 26px;
+  height: 26px;
+}
+
+.title {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin: 0 0 var(--s2);
+  text-align: center;
+}
+
+.subtitle {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  line-height: 1.55;
+  margin: 0 0 var(--s5);
+  text-align: center;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  margin-bottom: var(--s5);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: var(--s4);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link:hover {
+  color: var(--ink);
 }
 </style>

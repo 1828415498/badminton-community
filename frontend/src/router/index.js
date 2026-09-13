@@ -7,6 +7,18 @@ import { useUserStore } from '@/stores/user'
  * 用 hash 模式（URL 带 #），好处是部署时不需要服务端配置 fallback，
  * 直接把 dist 丢给任意静态服务器就能跑。
  */
+// 组件与令牌的检阅页 —— 只在开发环境注册，生产构建里不存在这个路由
+const devRoutes = import.meta.env.DEV
+  ? [
+      {
+        path: 'dev/ui',
+        name: 'dev-ui',
+        component: () => import('@/views/DevUI.vue'),
+        meta: { title: 'Design System' }
+      }
+    ]
+  : []
+
 const routes = [
   {
     path: '/login',
@@ -23,8 +35,14 @@ const routes = [
   {
     path: '/',
     component: () => import('@/layouts/AppLayout.vue'),
-    redirect: '/venues',
+    redirect: '/home',
     children: [
+      {
+        path: 'home',
+        name: 'home',
+        component: () => import('@/views/Home.vue'),
+        meta: { title: '首页' }
+      },
       {
         path: 'venues',
         name: 'venues',
@@ -78,10 +96,11 @@ const routes = [
         name: 'profile',
         component: () => import('@/views/Profile.vue'),
         meta: { title: '个人资料' }
-      }
+      },
+      ...devRoutes
     ]
   },
-  { path: '/:pathMatch(.*)*', redirect: '/venues' }
+  { path: '/:pathMatch(.*)*', redirect: '/home' }
 ]
 
 const router = createRouter({

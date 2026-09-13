@@ -1,5 +1,4 @@
 <script setup>
-import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
@@ -8,52 +7,83 @@ const route = useRoute()
 const router = useRouter()
 const store = useUserStore()
 
-// 让 /activities/new、/activities/3 这类子路径都高亮到"活动"菜单
-const activeMenu = computed(() => {
-  const p = route.path
-  const groups = ['/venues', '/reservations', '/activities', '/community', '/profile']
-  return groups.find((g) => p.startsWith(g)) || p
-})
+/**
+ * 自己判断高亮，不用 router-link 的 active-class。
+ * 原因：`to="/"` 的 RouterLink，其 router-link-active 对**任何**路径都成立
+ * （每条路径都以 / 开头），首页会永远显示为选中。
+ * 另外 `/` 会 redirect 到 `/home`，所以首页要同时认这两个路径。
+ */
+function isActive(item) {
+  if (item.to === '/home') return route.path === '/home' || route.path === '/'
+  return route.path === item.to || route.path.startsWith(item.to + '/')
+}
+
+// 导航项。用 router-link 的 active-class 判断高亮，
+// 子路径（/activities/new）会自动归到 /activities 上。
+// 首页排第一位：产品的第一个动作是"发现球局"，不是"管理预约"。
+const NAV = [
+  { to: '/home', label: '首页', icon: 'HomeFilled' },
+  { to: '/venues', label: '场馆预约', icon: 'Grid' },
+  { to: '/reservations', label: '我的预约', icon: 'Calendar' },
+  { to: '/activities', label: '活动', icon: 'Trophy' },
+  { to: '/community', label: '社区', icon: 'ChatLineSquare' }
+]
 
 async function handleLogout() {
   await store.logout()
   ElMessage.success('已退出登录')
   router.push('/login')
 }
+
+function handleCommand(cmd) {
+  if (cmd === 'logout') handleLogout()
+  else router.push('/profile')
+}
 </script>
 
 <template>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
   <el-container direction="vertical" class="app-shell">
-    <el-header height="56px" class="app-header">
+    <el-header height="60px" class="app-header">
       <div class="header-inner">
-        <div class="brand" @click="router.push('/venues')">
-          <span class="brand-mark">羽</span>
+        <div class="brand" @click="router.push('/')">
+          <!-- 球场俯视图：品牌色地面 + 墨色场线（中网 / 前后发球线 / 中线） -->
+          <svg class="brand-mark" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
+            <rect width="28" height="28" rx="8" fill="currentColor" />
+            <g stroke="#101311" fill="none" stroke-width="1.1" opacity="0.9">
+              <rect x="5.5" y="6" width="17" height="16" rx="1" />
+              <line x1="5.5" y1="14" x2="22.5" y2="14" stroke-width="1.5" />
+              <line x1="5.5" y1="10" x2="22.5" y2="10" />
+              <line x1="5.5" y1="18" x2="22.5" y2="18" />
+              <line x1="14" y1="6" x2="14" y2="10" />
+              <line x1="14" y1="18" x2="14" y2="22" />
+            </g>
+          </svg>
           <span class="brand-text">羽毛球社区</span>
         </div>
 
-        <el-menu :default-active="activeMenu" mode="horizontal" router class="nav-menu">
-          <el-menu-item index="/venues">
-            <el-icon><OfficeBuilding /></el-icon>场馆预约
-          </el-menu-item>
-          <el-menu-item index="/reservations">
-            <el-icon><Calendar /></el-icon>我的预约
-          </el-menu-item>
-          <el-menu-item index="/activities">
-            <el-icon><Flag /></el-icon>活动
-          </el-menu-item>
-          <el-menu-item index="/community">
-            <el-icon><ChatDotRound /></el-icon>社区
-          </el-menu-item>
-        </el-menu>
+        <nav class="nav" aria-label="主导航">
+          <router-link
+            v-for="item in NAV"
+            :key="item.to"
+            :to="item.to"
+            class="nav-item"
+            :class="{ 'is-active': isActive(item) }"
+          >
+            <el-icon :size="15"><component :is="item.icon" /></el-icon>
+            <span>{{ item.label }}</span>
+          </router-link>
+        </nav>
 
-        <el-dropdown @command="(cmd) => cmd === 'logout' ? handleLogout() : router.push('/profile')">
-          <span class="user-chip">
+        <el-dropdown @command="handleCommand">
+          <button class="user-chip" type="button">
             <el-avatar :size="26" :src="store.user?.avatar_url">
               {{ (store.user?.nickname || '?').slice(0, 1) }}
             </el-avatar>
             <span class="user-name">{{ store.user?.nickname }}</span>
-            <el-icon><ArrowDown /></el-icon>
-          </span>
+            <el-icon :size="12"><ArrowDown /></el-icon>
+          </button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="profile">
@@ -68,92 +98,212 @@ async function handleLogout() {
       </div>
     </el-header>
 
-    <el-main class="app-main">
+    <el-main id="main" class="app-main">
       <router-view />
     </el-main>
+
+    <!-- 移动端底部 Tab：桌面隐藏。
+         横向滚动的顶部导航在手机上等于"导航项消失"，必须换成拇指够得到的底部栏。 -->
+    <nav class="tabbar" aria-label="底部导航">
+      <router-link
+        v-for="item in NAV"
+        :key="item.to"
+        :to="item.to"
+        class="tabbar__item"
+        :class="{ 'is-active': isActive(item) }"
+      >
+        <el-icon :size="20"><component :is="item.icon" /></el-icon>
+        <span>{{ item.label }}</span>
+      </router-link>
+    </nav>
   </el-container>
 </template>
 
 <style scoped>
-/* 整页渐变背景：顶部淡蓝紫 → 中段偏白 → 纯白。
-   挂在 100vh 的容器上（内容在 .app-main 内部滚动），
-   所以背景是固定的、不会随内容滚动被拉伸。 */
+/* 背景：近白纯色。
+   上一版的淡蓝紫渐变属于「AI SaaS 风格」，与新方向（去渐变、去玻璃拟态）冲突，
+   已按 docs/frontend-design.md §3 移除。 */
 .app-shell {
   height: 100vh;
-  background: linear-gradient(180deg, #c9d3f2 0%, #e3e9f9 30%, #ffffff 62%);
+  background: var(--bg);
 }
 
-/* 顶部导航融入渐变：透明 + 去掉分割线 */
+/* 顶部导航：实体白面 + 一条发丝线。
+   去掉了毛玻璃（backdrop-filter）—— 那也是被点名的 AI 味元素之一。 */
 .app-header {
-  background: transparent;
-  border-bottom: none;
   padding: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
 }
 
 .header-inner {
-  max-width: 1080px;
-  height: 56px;
+  max-width: 1120px;
+  height: 60px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 20px;
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 28px;
 }
 
+/* ---- 品牌 ---- */
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .brand-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  background: #409eff;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--brand);
+  flex-shrink: 0;
 }
 
 .brand-text {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
   white-space: nowrap;
 }
 
-.nav-menu {
+/* ---- 导航 ---- */
+.nav {
   flex: 1;
-  border-bottom: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
 }
 
-.user-chip {
+.nav-item {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 14px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-item:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* 当前页：品牌色浅底 + 墨色文字 + 字重。
+   品牌色是荧光青柠，绝不能当文字用（在白底上对比度不足 3:1），
+   所以这里是"浅底 + 墨字"，而不是"品牌色文字"。
+   同时用字重做第二重标记 —— 不靠颜色单独传递信息。 */
+.nav-item.is-active {
+  background: var(--brand-200);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ---- 用户区 ---- */
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px 4px 5px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  font-family: inherit;
   cursor: pointer;
-  outline: none;
-  padding: 4px 8px;
-  border-radius: 6px;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .user-chip:hover {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--surface-2);
+  border-color: var(--line);
 }
 
 .user-name {
-  font-size: 13px;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-main {
   padding: 0;
   overflow-y: auto;
-  /* 背景透明，让 .app-shell 的整页渐变透出来 */
   background: transparent;
+}
+
+/* ---- 移动端底部 Tab（桌面隐藏） ---- */
+.tabbar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  /* 顶部横向导航在手机上会溢出，直接换成底部栏 */
+  .nav {
+    display: none;
+  }
+
+  .header-inner {
+    gap: var(--s3);
+    justify-content: space-between;
+    padding: 0 var(--s4);
+  }
+
+  .tabbar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .tabbar__item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 54px;
+    font-size: var(--fs-xs);
+    color: var(--ink-3);
+    text-decoration: none;
+  }
+
+  /* 当前页：品牌色指示条 + 字重，不靠颜色单独传递 */
+  .tabbar__item.is-active {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .tabbar__item.is-active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: var(--brand);
+  }
+
+  /* 给底部栏留出空间，否则最后一块内容会被盖住 */
+  .app-main {
+    padding-bottom: 54px;
+  }
 }
 </style>
