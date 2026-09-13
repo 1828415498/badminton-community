@@ -1,8 +1,192 @@
-:root {
-  --page-bg: #f5f7fa;
+/* ==========================================================================
+   Badminton Community · Design System
+   --------------------------------------------------------------------------
+   规范源：docs/frontend-design.md
+   本文件是唯一的设计令牌来源，所有页面与组件只允许引用这里的变量。
+
+   方向：「运动社区 × 高级极简」
+   高级感来自排版、留白、层级、对齐、节奏 —— 不来自渐变 / 阴影 / 圆角 / 发光。
+   ========================================================================== */
+
+/* ==========================================================================
+   0. 展示字体（自托管，不依赖 CDN）
+   --------------------------------------------------------------------------
+   只含 Latin 子集（35KB）。中文不加载 webfont（3–8MB 不可接受），
+   走系统字体栈。浏览器按字符逐个 fallback，所以中英混排天然正确。
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 500 800;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url('/fonts/archivo-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-* {
+/* ==========================================================================
+   1. 令牌
+   ========================================================================== */
+
+:root {
+  /* ---- 面与墨 ----
+     去掉一切蓝紫调。画布是近白，墨色是近黑（不是纯黑，避免生硬）。 */
+  --bg: #f7f8f7;          /* 页面底 */
+  --surface: #ffffff;     /* 面 */
+  --surface-2: #f1f3f2;   /* 次级面：表头、填充块 */
+
+  --ink: #101311;         /* 主文字 / 深色区块底      对白 17.6:1 */
+  --ink-2: #4b514d;       /* 次级文字                对底  7.6:1 */
+  --ink-3: #666d67;       /* 元信息 / 辅助            对底  5.0:1 */
+  --ink-inv: #ffffff;     /* 深底上的文字 */
+
+  /* ---- 描边：默认的分隔手段，优先于阴影 ---- */
+  --line: #e8eae9;
+  --line-2: #d6d9d7;
+
+  /* ---- 品牌色：电光青柠 ----
+     ⚠️ 荧光色在白底上对比度不足 3:1，绝不能作为正文色。
+     用法只有两种：
+       ① 填充（按钮 / 徽标 / 强调块）+ 深色文字 —— 对比度 14.6:1
+       ② 大色块、下划线、进度填充
+     需要"品牌色系文字"时改用 --brand-600。 */
+  --brand: #c6f432;
+  --brand-600: #5f7a10;   /* 品牌色文字版 4.9:1 */
+  --brand-100: #f2fbd8;   /* 品牌色浅底 */
+  --brand-200: #e2f4a8;
+  --brand-ink: #101311;   /* 品牌色上的文字 */
+
+  /* ---- 语义色：深、去糖 ---- */
+  --danger: #c0392b;
+  --danger-100: #fbeae8;
+  --warn: #9a6b12;
+  --warn-100: #fbf2e2;
+  --ok: #2f6b2a;
+  --ok-100: #eaf3e8;
+
+  /* ---- 字体 ----
+     display 用于大标题与数字（Latin 部分用 Archivo）；中文自动落回系统栈 */
+  --font-display: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+
+  /* ---- 字号层级 ----
+     Hero 与 Body 的比值需 ≥ 4×，层级才有力量（改造前只有 1.25×） */
+  --fs-hero: clamp(38px, 6.4vw, 68px);
+  --fs-h1: 38px;
+  --fs-h2: 26px;
+  --fs-h3: 19px;
+  --fs-stat: 34px;
+  --fs-lead: 17px;
+  --fs-body: 15px;
+  --fs-sm: 13px;
+  --fs-xs: 12px;
+
+  /* ---- 间距 8pt 基准 ---- */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+  --s9: 96px;
+
+  /* ---- 圆角：按层级分档，且允许直角 ---- */
+  --r-xs: 2px;   /* 徽标、数字块、表格 —— 接近直角 */
+  --r-sm: 6px;   /* 按钮、输入 */
+  --r-md: 10px;  /* 卡片 */
+  --r-lg: 16px;  /* 唯一的大圆角，只给 Hero / 弹层 */
+
+  /* ---- 阴影：只在真正需要层次时用 ---- */
+  --shadow-1: 0 1px 2px rgba(16, 19, 17, 0.04);
+  --shadow-2: 0 18px 48px -22px rgba(16, 19, 17, 0.28);
+
+  --nav-h: 64px;
+}
+
+/* ==========================================================================
+   2. Element Plus 覆盖
+   --------------------------------------------------------------------------
+   关键决策：--el-color-primary 设为「墨色」而不是品牌色。
+   原因：Element 内部大量组件会在 primary 填充上放白色文字（分页选中、
+   日期选中、单选勾选…）。品牌色是荧光青柠，配白字对比度只有 1.3:1，完全不可读。
+   设成墨色后这些组件天然满足对比度，而且是"高级极简"该有的样子。
+   品牌色只通过我们自己的组件（AppButton 等）出现。
+   ========================================================================== */
+
+:root {
+  --el-color-primary: #101311;
+  --el-color-primary-light-3: #3a3f3c;
+  --el-color-primary-light-5: #636863;
+  --el-color-primary-light-7: #9aa09b;
+  --el-color-primary-light-8: #c3c7c4;
+  --el-color-primary-light-9: #f1f3f2;
+  --el-color-primary-dark-2: #000000;
+
+  --el-color-success: #2f6b2a;
+  --el-color-success-light-5: #8fb68b;
+  --el-color-success-light-9: #eaf3e8;
+
+  --el-color-warning: #9a6b12;
+  --el-color-warning-light-5: #c9ac7f;
+  --el-color-warning-light-9: #fbf2e2;
+
+  --el-color-danger: #c0392b;
+  --el-color-error: #c0392b;
+  --el-color-danger-light-5: #da9c94;
+  --el-color-danger-light-9: #fbeae8;
+  --el-color-error-light-5: #da9c94;
+  --el-color-error-light-9: #fbeae8;
+
+  --el-color-info: #666d67;
+  --el-color-info-light-5: #b2b8b4;
+  --el-color-info-light-9: #f1f3f2;
+
+  --el-text-color-primary: #101311;
+  --el-text-color-regular: #4b514d;
+  --el-text-color-secondary: #666d67;
+  --el-text-color-placeholder: #9aa09b;
+  --el-text-color-disabled: #b2b8b4;
+
+  --el-border-color: #e8eae9;
+  --el-border-color-light: #eff1f0;
+  --el-border-color-lighter: #f4f6f5;
+  --el-border-color-extra-light: #f8faf9;
+
+  --el-fill-color-light: #f1f3f2;
+  --el-fill-color-lighter: #f7f8f7;
+  --el-fill-color-blank: #ffffff;
+
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 999px;
+
+  --el-box-shadow-light: 0 8px 24px -14px rgba(16, 19, 17, 0.2);
+  --el-box-shadow: 0 18px 48px -22px rgba(16, 19, 17, 0.28);
+
+  /* 开关没有文字，可以安全用品牌色表示"开" */
+  --el-switch-on-color: #c6f432;
+
+  --el-table-border-color: #e8eae9;
+  --el-table-header-bg-color: transparent;
+  --el-table-header-text-color: #666d67;
+  --el-table-row-hover-bg-color: #f7f8f7;
+  --el-table-text-color: #4b514d;
+}
+
+/* ==========================================================================
+   3. 基础
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -15,59 +199,318 @@ body,
 }
 
 body {
-  background: var(--page-bg);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
-    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  color: #303133;
+  background: var(--bg);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  color: var(--ink-2);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 焦点环用墨色而不是品牌色 —— 荧光色描边在近白底上几乎看不见 */
+:where(a, button, [tabindex], input, select, textarea):focus-visible,
+.el-button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  color: var(--ink-inv);
+  font-size: var(--fs-sm);
+  transition: top 0.16s;
+}
+
+.skip-link:focus {
+  top: 12px;
+}
+
+/* ==========================================================================
+   4. 排版工具类
+   ========================================================================== */
+
+/* Hero：只有首页第一屏用它 */
+.display {
+  font-family: var(--font-display);
+  font-size: var(--fs-hero);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.03;
+  color: var(--ink);
+  margin: 0;
+}
+
+.h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0;
+}
+
+.h2 {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  margin: 0;
+}
+
+.h3 {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.lead {
+  font-size: var(--fs-lead);
+  line-height: 1.55;
+  color: var(--ink-2);
+  margin: 0;
+}
+
+/* 辅助信息：时间、发起人、计数器 */
+.meta {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  margin: 0;
+}
+
+.micro {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  margin: 0;
+}
+
+/* 数字统一用等宽字形：时间与计数在列表里逐行对齐，扫读快很多 */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.muted {
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+
+/* ==========================================================================
+   5. 页面骨架（沿用旧名，避免既有页面立刻失效）
+   ========================================================================== */
+
 .page {
-  max-width: 1080px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 20px 16px 48px;
+  padding: var(--s5) var(--s5) var(--s9);
 }
 
 .page-head {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 18px;
-  gap: 12px;
+  gap: var(--s4);
   flex-wrap: wrap;
+  margin-bottom: var(--s5);
 }
 
 .page-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
   margin: 0;
+  line-height: 1.15;
 }
 
 .page-sub {
-  font-size: 13px;
-  color: #909399;
-  margin: 4px 0 0;
+  margin: var(--s1) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
 }
 
-.muted {
-  color: #909399;
-  font-size: 13px;
+/* 规则说明：一行轻文本。不要用色块提示条（每页都出现就变成噪音） */
+.hint-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: var(--s4);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
 }
 
+.hint-row svg {
+  flex-shrink: 0;
+  color: var(--ink-3);
+}
+
+/* 旧版卡片网格：既有页面仍在用，Phase 4 会替换掉 */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
-}
-
-.slot-tag {
-  cursor: pointer;
-  user-select: none;
-}
-
-.slot-tag.is-mine {
-  cursor: default;
+  gap: var(--s4);
 }
 
 .empty-box {
-  padding: 40px 0;
+  padding: var(--s7) 0;
+}
+
+/* ==========================================================================
+   6. 区块与分隔
+   --------------------------------------------------------------------------
+   描边优先于阴影。不用"每张卡都套同一层灰阴影"。
+   ========================================================================== */
+
+.surface {
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.panel-pad {
+  padding: var(--s5);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-title {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* 区块之间靠留白与一条发丝线分隔，而不是靠卡片 */
+.rule {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+  margin: 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin-bottom: var(--s5);
+}
+
+/* ==========================================================================
+   7. 分段控件
+   ========================================================================== */
+
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.segmented > button {
+  border: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+}
+
+.segmented > button:hover {
+  color: var(--ink);
+}
+
+/* 选中态用"墨底白字"：对比度足够，且不依赖品牌色传递信息 */
+.segmented > button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--ink-inv);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   8. 空状态
+   --------------------------------------------------------------------------
+   空屏必须给出下一步动作，不能只是一块白。
+   ========================================================================== */
+
+.empty {
+  padding: var(--s8) var(--s5);
+  text-align: center;
+}
+
+.empty-mark {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto var(--s4);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-title {
+  margin: 0 0 var(--s1);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.empty-sub {
+  margin: 0 0 var(--s5);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
 }
