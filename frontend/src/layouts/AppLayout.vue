@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
@@ -17,6 +18,9 @@ function isActive(item) {
   if (item.to === '/home') return route.path === '/home' || route.path === '/'
   return route.path === item.to || route.path.startsWith(item.to + '/')
 }
+
+/** 聚焦任务页（自己带固定主操作栏的详情页）不显示底部 Tab，见模板注释 */
+const showTabbar = computed(() => !route.meta.hideTabBar)
 
 /*
   导航只放 4 项，对应产品真正要用户做的三件事：
@@ -114,8 +118,12 @@ function handleCommand(cmd) {
     </el-main>
 
     <!-- 移动端底部 Tab：桌面隐藏。
-         横向滚动的顶部导航在手机上等于"导航项消失"，必须换成拇指够得到的底部栏。 -->
-    <nav class="tabbar" aria-label="底部导航">
+         横向滚动的顶部导航在手机上等于"导航项消失"，必须换成拇指够得到的底部栏。
+
+         带 meta.hideTabBar 的路由（如球局详情）不显示 —— 那类页面自己有一条
+         固定的主操作栏，两条底栏叠在一起会吃掉 ~120px 屏高，而且主操作按钮
+         紧挨着导航 Tab 很容易误点。返回靠页面自己的返回链接。 -->
+    <nav v-if="showTabbar" class="tabbar" aria-label="底部导航">
       <router-link
         v-for="item in NAV"
         :key="item.to"
@@ -269,8 +277,7 @@ function handleCommand(cmd) {
   }
 
   .tabbar {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    display: flex;
     position: fixed;
     left: 0;
     right: 0;
@@ -283,6 +290,7 @@ function handleCommand(cmd) {
 
   .tabbar__item {
     position: relative;
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;

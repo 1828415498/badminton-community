@@ -11,7 +11,7 @@
  * 状态语义由页面映射（后端 status 是 0/1/2/3/4，不该泄漏进组件）。
  */
 defineProps({
-  /** open 可加入 / full 已满 / pending 待审核 / done 已结束 / cancelled 已取消 / brand 强调 / neutral 中性 */
+  /** open 可加入 / full 已满 / pending 待审核 / rejected 已驳回 / done 已结束 / cancelled 已取消 / brand 强调 / neutral 中性 */
   kind: { type: String, default: 'neutral' },
   /** 关掉左侧圆点（用在已经有图标的地方） */
   plain: { type: Boolean, default: false }
@@ -21,6 +21,7 @@ const DEFAULT_LABEL = {
   open: '可加入',
   full: '已满',
   pending: '待审核',
+  rejected: '已驳回',
   done: '已结束',
   cancelled: '已取消',
   brand: '',
@@ -71,6 +72,14 @@ const DEFAULT_LABEL = {
 .app-badge--pending {
   background: var(--warn-100);
   color: var(--warn);
+}
+
+/* 已驳回：唯一用 danger 色的徽标。这里给颜色是合理的 ——
+   它是"这件事没成"，不是普通状态，需要在一屏里被立刻注意到。
+   圆点仍在，所以颜色不是唯一的信息载体。 */
+.app-badge--rejected {
+  background: var(--danger-100);
+  color: var(--danger);
 }
 
 .app-badge--done {

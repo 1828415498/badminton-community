@@ -19,4 +19,21 @@ for (const [name, component] of Object.entries(ElementPlusIconsVue)) {
 app.use(createPinia())
 app.use(router)
 app.use(ElementPlus, { locale: zhCn })
+
+/**
+ * 兜住"已经提示过用户、但页面没写 catch"的接口错误。
+ *
+ * 背景：axios 拦截器失败时会 reject，页面若只有 try/finally 而没 catch，
+ * 这个拒绝就升级为未处理的 Promise 拒绝，控制台多一条红色报错 ——
+ * 但用户其实已经看到 ElMessage 了，这不是程序 bug。
+ *
+ * 只吞带 __toasted 标记的（见 api/request.js），
+ * 真正的 JS 异常（TypeError、undefined 访问等）照旧暴露，不会被掩盖。
+ */
+window.addEventListener('unhandledrejection', (event) => {
+  if (event.reason && event.reason.__toasted) {
+    event.preventDefault()
+  }
+})
+
 app.mount('#app')

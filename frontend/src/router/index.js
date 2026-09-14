@@ -77,7 +77,8 @@ const routes = [
         path: 'activities/:id',
         name: 'activity-detail',
         component: () => import('@/views/ActivityDetail.vue'),
-        meta: { title: '活动详情' }
+        // hideTabBar：这一页自己带固定主操作栏，移动端不再叠加底部 Tab
+        meta: { title: '球局详情', hideTabBar: true }
       },
       {
         path: 'community',
@@ -89,6 +90,8 @@ const routes = [
         path: 'community/:id',
         name: 'post-detail',
         component: () => import('@/views/PostDetail.vue'),
+        // 暂不加 hideTabBar：这页目前还没有自己的固定操作栏，
+        // 隐藏底部 Tab 会让移动端失去导航出口。等重做该页时一并加上。
         meta: { title: '帖子详情' }
       },
       {
