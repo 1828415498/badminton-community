@@ -602,21 +602,6 @@ onMounted(async () => {
 }
 
 /* 首屏骨架：与时间表同样的纵向节奏 */
-.tt-skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-  padding: var(--s5);
-}
-
-/* 切换日期时降透明度，而不是盖一层转圈遮罩：
-   用户还能看到上一秒的排期，不会整块闪白 */
-.tt-grid.is-busy {
-  opacity: 0.45;
-  pointer-events: none;
-  transition: opacity 0.15s;
-}
-
 /* ---------- 日期排 ---------- */
 .daybar {
   display: flex;
@@ -647,12 +632,12 @@ onMounted(async () => {
 }
 
 .day-label {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--ink-2);
 }
 
 .day-sub {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }
 
@@ -665,9 +650,17 @@ onMounted(async () => {
   border-color: var(--brand);
 }
 
-/* 今天已经过完了（比如晚上 9 点后）：压暗提示，不要让人白点一下 */
+/* 今天已经过完了（比如晚上 9 点后）：提示用户别白点一下。
+   🔴 同样**不用 opacity** —— 这个按钮仍然可点（切过去能看到整天已过），
+   所以不属于"禁用态可豁免对比度"的情形；压暗会让标签读不清。
+   改用"虚线描边 + 弱化文字色"表达"这里没有东西"。 */
 .day.over:not(.on) {
-  opacity: 0.5;
+  border-style: dashed;
+  border-color: var(--line-2);
+}
+
+.day.over:not(.on) .day-label {
+  color: var(--ink-3);
 }
 
 .day.on .day-label {
@@ -785,6 +778,13 @@ onMounted(async () => {
 .tt-off.is-booked {
   background: var(--line-2);
   border-color: var(--line-2);
+}
+
+/* 「约 / 活」这两个标记字承载信息，必须达标 ——
+   ink-3 压在 --line-2 上只有 3.74:1（实测），改用 ink-2 = 5.72:1 */
+.tt-off.is-booked,
+.tt-off.is-activity {
+  color: var(--ink-2);
 }
 
 .tt-off.is-past {

@@ -62,7 +62,7 @@
   /* ---- 语义色：深、去糖 ---- */
   --danger: #c0392b;
   --danger-100: #fbeae8;
-  --warn: #9a6b12;
+  --warn: #8a5f10; /* 实算 5.07:1 on --warn-100（原 #9a6b12 只有 4.21:1，不达标） */
   --warn-100: #fbf2e2;
   --ok: #2f6b2a;
   --ok-100: #eaf3e8;
@@ -125,48 +125,60 @@
    品牌色只通过我们自己的组件（AppButton 等）出现。
    ========================================================================== */
 
+/*
+  Element Plus 主题变量覆盖。
+
+  🔴 语义色一律引用本项目的令牌，**不要在这里再写一遍十六进制**。
+  踩过的坑：这里曾硬编码 `--el-color-warning: #9a6b12`，后来把令牌 `--warn`
+  调深到达标值，Element 的组件却还是旧色 —— 同一个语义色有了两个来源，
+  必然漂移。现在只保留"基准色 → 令牌"的引用。
+
+  下面 `-light-3/5/7/8`、`-dark-2` 这类**派生色阶必须写死**：
+  Element 把算好的色阶当常量直接用，不会去追基准变量；
+  它们与上面的基准色是配套手算的，改基准时要一起看。
+*/
 :root {
-  --el-color-primary: #101311;
+  --el-color-primary: var(--ink);
   --el-color-primary-light-3: #3a3f3c;
   --el-color-primary-light-5: #636863;
   --el-color-primary-light-7: #9aa09b;
   --el-color-primary-light-8: #c3c7c4;
-  --el-color-primary-light-9: #f1f3f2;
+  --el-color-primary-light-9: var(--surface-2);
   --el-color-primary-dark-2: #000000;
 
-  --el-color-success: #2f6b2a;
+  --el-color-success: var(--ok);
   --el-color-success-light-5: #8fb68b;
-  --el-color-success-light-9: #eaf3e8;
+  --el-color-success-light-9: var(--ok-100);
 
-  --el-color-warning: #9a6b12;
+  --el-color-warning: var(--warn);
   --el-color-warning-light-5: #c9ac7f;
-  --el-color-warning-light-9: #fbf2e2;
+  --el-color-warning-light-9: var(--warn-100);
 
-  --el-color-danger: #c0392b;
-  --el-color-error: #c0392b;
+  --el-color-danger: var(--danger);
+  --el-color-error: var(--danger);
   --el-color-danger-light-5: #da9c94;
-  --el-color-danger-light-9: #fbeae8;
+  --el-color-danger-light-9: var(--danger-100);
   --el-color-error-light-5: #da9c94;
-  --el-color-error-light-9: #fbeae8;
+  --el-color-error-light-9: var(--danger-100);
 
-  --el-color-info: #666d67;
+  --el-color-info: var(--ink-3);
   --el-color-info-light-5: #b2b8b4;
-  --el-color-info-light-9: #f1f3f2;
+  --el-color-info-light-9: var(--surface-2);
 
-  --el-text-color-primary: #101311;
-  --el-text-color-regular: #4b514d;
-  --el-text-color-secondary: #666d67;
+  --el-text-color-primary: var(--ink);
+  --el-text-color-regular: var(--ink-2);
+  --el-text-color-secondary: var(--ink-3);
   --el-text-color-placeholder: #9aa09b;
   --el-text-color-disabled: #b2b8b4;
 
-  --el-border-color: #e8eae9;
+  --el-border-color: var(--line);
   --el-border-color-light: #eff1f0;
   --el-border-color-lighter: #f4f6f5;
   --el-border-color-extra-light: #f8faf9;
 
-  --el-fill-color-light: #f1f3f2;
-  --el-fill-color-lighter: #f7f8f7;
-  --el-fill-color-blank: #ffffff;
+  --el-fill-color-light: var(--surface-2);
+  --el-fill-color-lighter: var(--bg);
+  --el-fill-color-blank: var(--surface);
 
   --el-border-radius-base: 8px;
   --el-border-radius-small: 6px;

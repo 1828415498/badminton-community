@@ -192,7 +192,7 @@ onMounted(async () => {
 .hint {
   margin-left: 10px;
   font-size: 12px;
-  color: #909399;
+  color: var(--ink-3); /* #909399 只有 2.9:1，已弃用 */
 }
 
 .court-checks {

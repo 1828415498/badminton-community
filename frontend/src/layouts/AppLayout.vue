@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import { AppAvatar } from '@/components'
 
 const route = useRoute()
 const router = useRouter()
@@ -93,9 +94,9 @@ function handleCommand(cmd) {
 
         <el-dropdown @command="handleCommand">
           <button class="user-chip" type="button">
-            <el-avatar :size="26" :src="store.user?.avatar_url">
-              {{ (store.user?.nickname || '?').slice(0, 1) }}
-            </el-avatar>
+            <!-- 用自研 AppAvatar 而不是 el-avatar：后者兜底时是"白字压灰底"，
+                 实测只有 2.02:1；而且展示型组件本就该自研（见组件边界） -->
+            <AppAvatar :size="26" :src="store.user?.avatar_url" :name="store.user?.nickname" />
             <span class="user-name">{{ store.user?.nickname }}</span>
             <el-icon :size="12"><ArrowDown /></el-icon>
           </button>
