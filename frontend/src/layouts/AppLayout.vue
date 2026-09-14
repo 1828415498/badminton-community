@@ -296,7 +296,7 @@ function handleCommand(cmd) {
     align-items: center;
     justify-content: center;
     gap: 3px;
-    height: 54px;
+    height: var(--tabbar-h);
     font-size: var(--fs-xs);
     color: var(--ink-3);
     text-decoration: none;
@@ -322,7 +322,7 @@ function handleCommand(cmd) {
 
   /* 给底部栏留出空间，否则最后一块内容会被盖住 */
   .app-main {
-    padding-bottom: 54px;
+    padding-bottom: var(--tabbar-h);
   }
 }
 </style>
