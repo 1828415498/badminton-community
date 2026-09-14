@@ -7,13 +7,19 @@
  *    用户回头就不知道这一栏是什么。
  * 2. **错误贴近字段本身**，用「图标 + 文字」表达，不只靠红色 —— 色觉障碍用户也要能读到。
  * 3. 整体包在 <label> 里，点击标签任意位置都能聚焦，也是无障碍的原生关联方式。
+ *
+ * type="textarea" 时渲染多行输入（rows 控制初始高度）。多行样式与单行共用同一套
+ * 边框/聚焦/错误态，避免两套输入框观感分叉。
  */
 defineProps({
   modelValue: { type: [String, Number], default: '' },
   label: { type: String, default: '' },
   hint: { type: String, default: '' },
   error: { type: String, default: '' },
+  /** 'text' | 'password' | 'email' | 'textarea' …（textarea 会渲染多行输入） */
   type: { type: String, default: 'text' },
+  /** 仅多行模式生效：初始显示几行 */
+  rows: { type: Number, default: 4 },
   placeholder: { type: String, default: '' },
   autocomplete: { type: String, default: 'off' },
   maxlength: { type: [String, Number], default: undefined },
@@ -36,7 +42,21 @@ defineEmits(['update:modelValue'])
         <slot name="prefix" />
       </span>
 
+      <textarea
+        v-if="type === 'textarea'"
+        class="app-field__input app-field__input--area"
+        :class="{ 'is-error': !!error }"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :rows="rows"
+        :maxlength="maxlength"
+        :disabled="disabled"
+        :required="required"
+        :aria-invalid="!!error"
+        @input="$emit('update:modelValue', $event.target.value)"
+      ></textarea>
       <input
+        v-else
         class="app-field__input"
         :class="{ 'is-error': !!error, 'has-prefix': !!$slots.prefix }"
         :type="type"
@@ -115,6 +135,15 @@ defineEmits(['update:modelValue'])
   color: var(--ink);
   outline: none;
   transition: border-color 0.14s, box-shadow 0.14s;
+}
+
+/* 多行：高度由 rows 决定，只允许纵向拉伸（横向拉伸会破坏栅格） */
+.app-field__input--area {
+  height: auto;
+  min-height: 42px;
+  padding: 10px var(--s3);
+  line-height: 1.6;
+  resize: vertical;
 }
 
 .app-field__input.has-prefix {

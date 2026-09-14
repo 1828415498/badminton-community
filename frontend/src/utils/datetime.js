@@ -100,14 +100,15 @@ export function whenShort(s) {
   return `${dayName(p.date)} ${pad(p.h)}:${pad(p.m)}`
 }
 
-/** "17:00–19:00"（同日）或 "17:00–次日 09:00" */
+/** "17:00–19:00"；跨天时标出「次日」 */
 export function timeRange(startStr, endStr) {
   const a = parseTime(startStr)
   const b = parseTime(endStr)
   if (!a) return ''
   if (!b) return `${pad(a.h)}:${pad(a.m)}`
-  const crossDay = dayDiff(b.date) !== dayDiff(a.date)
-  const head = crossDay ? `${pad(b.h)}:${pad(b.m)}` : `${pad(b.h)}:${pad(b.m)}`
+  const hm = `${pad(b.h)}:${pad(b.m)}`
+  // 跨天要说清楚是第二天 —— 只写 "22:00–01:00" 会被读成倒着的时间段
+  const head = dayDiff(b.date) !== dayDiff(a.date) ? `次日 ${hm}` : hm
   return `${pad(a.h)}:${pad(a.m)}–${head}`
 }
 
@@ -116,6 +117,32 @@ export function dateLong(s) {
   const p = parseTime(s)
   if (!p) return ''
   return `${p.date.getMonth() + 1}月${p.date.getDate()}日 ${WEEK[p.date.getDay()]}`
+}
+
+/**
+ * 相对时间：社区动态流用。
+ *
+ * <p>规则：**24 小时内一律说"N 小时前 / N 分钟前"** —— 比"昨天 21:00"更精确，
+ * 也不会出现"今天 01:00"与"昨天 23:00"看起来只差两小时的错觉。
+ * 超过 24 小时才切到按天表述（昨天 / 前天 / 周三 / 9月3日）。</p>
+ *
+ * <p>按天判断时**只比年月日**（`dayDiff`），理由见文件头。</p>
+ */
+export function fromNow(s) {
+  const p = parseTime(s)
+  if (!p) return ''
+  const delta = Date.now() - p.date.getTime()
+  if (delta < 0) return '刚刚' // 客户端时钟偏差，不要显示"负几小时前"
+  if (delta < 60000) return '刚刚'
+  if (delta < 3600000) return `${Math.floor(delta / 60000)} 分钟前`
+  if (delta < 86400000) return `${Math.floor(delta / 3600000)} 小时前`
+
+  const d = dayDiff(p.date)
+  const hm = `${pad(p.h)}:${pad(p.m)}`
+  if (d === 1) return `昨天 ${hm}`
+  if (d === 2) return `前天 ${hm}`
+  if (d > 2 && d <= 6) return `${WEEK[p.date.getDay()]} ${hm}`
+  return `${p.date.getMonth() + 1}月${p.date.getDate()}日`
 }
 
 export { WEEK }
