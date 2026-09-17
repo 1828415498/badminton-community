@@ -63,21 +63,23 @@ function handleCommand(cmd) {
   <el-container direction="vertical" class="app-shell">
     <el-header height="60px" class="app-header">
       <div class="header-inner">
-        <div class="brand" @click="router.push('/')">
-          <!-- 球场俯视图：品牌色地面 + 墨色场线（中网 / 前后发球线 / 中线） -->
+        <!-- 只剩一个图标，所以用 router-link 而不是 div：
+             它本来就是「回到首页」的链接，键盘要能 Tab 到。
+             纯图标元素没有可读文字，必须靠 aria-label 把意思说完整。 -->
+        <router-link to="/" class="brand" aria-label="羽毛球社区 · 回到首页">
+          <!-- 羽毛球：品牌色圆角块托底，墨色球身（羽毛裙 + 球头）。
+               裙上那道品牌色细线是分羽线，28px 下刚好够看出结构。
+               上一版画的是球场俯视图，缩到 28px 后更像「文档/表格」图标。 -->
           <svg class="brand-mark" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
             <rect width="28" height="28" rx="8" fill="currentColor" />
-            <g stroke="#101311" fill="none" stroke-width="1.1" opacity="0.9">
-              <rect x="5.5" y="6" width="17" height="16" rx="1" />
-              <line x1="5.5" y1="14" x2="22.5" y2="14" stroke-width="1.5" />
-              <line x1="5.5" y1="10" x2="22.5" y2="10" />
-              <line x1="5.5" y1="18" x2="22.5" y2="18" />
-              <line x1="14" y1="6" x2="14" y2="10" />
-              <line x1="14" y1="18" x2="14" y2="22" />
-            </g>
+            <!-- 羽毛裙：顶边带一点弧度（球面感），向下收窄 -->
+            <path d="M5.2 7.2 Q14 5.9 22.8 7.2 L18.4 16.5 H9.6 Z" fill="#101311" />
+            <!-- 球头：胶囊形，底部自然收成半圆 -->
+            <rect x="9.6" y="16.5" width="8.8" height="5.4" rx="2.7" fill="#101311" />
+            <!-- 分羽线 -->
+            <line x1="14" y1="6.5" x2="14" y2="16.5" stroke="currentColor" stroke-width="1" />
           </svg>
-          <span class="brand-text">羽毛球社区</span>
-        </div>
+        </router-link>
 
         <nav class="nav" aria-label="主导航">
           <router-link
@@ -170,22 +172,31 @@ function handleCommand(cmd) {
 .brand {
   display: flex;
   align-items: center;
-  gap: 9px;
-  cursor: pointer;
+  /* 只剩图标，不再需要 gap。用等量 padding + 负 margin 把点击热区撑大，
+     而布局位置保持不变（热区 ≥ 36px，手指也够点） */
+  padding: 4px;
+  margin: -4px;
+  border-radius: 10px;
+  text-decoration: none;
   flex-shrink: 0;
 }
 
 .brand-mark {
   color: var(--brand);
   flex-shrink: 0;
+  transition: transform 0.16s ease-out;
 }
 
-.brand-text {
-  font-size: var(--fs-body);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  white-space: nowrap;
+/* 图标本身就是一块品牌色实底，hover 时轻微放大比换色更克制，
+   也不会因为荧光色的明度变化引出新的对比度问题 */
+.brand:hover .brand-mark {
+  transform: scale(1.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark {
+    transition: none;
+  }
 }
 
 /* ---- 导航 ---- */
