@@ -1,5 +1,6 @@
 package com.badmintoncommunity.module.reservation.mapper;
 
+import com.badmintoncommunity.module.reservation.dto.ActivityCourtRow;
 import com.badmintoncommunity.module.reservation.dto.OccupancySlot;
 import com.badmintoncommunity.module.reservation.dto.ReservationVO;
 import com.badmintoncommunity.module.reservation.entity.Reservation;
@@ -139,6 +140,22 @@ public interface ReservationMapper {
     @Select("SELECT DISTINCT court_id FROM reservation "
             + "WHERE activity_id = #{activityId} ORDER BY court_id")
     List<Long> findCourtIdsByActivityId(Long activityId);
+
+    /**
+     * 批量查多个活动各自占用的球场（活动列表补 {@code court_ids} 用）。
+     *
+     * <p>一次查询覆盖整页，避免"每行活动各查一次"的 N+1。</p>
+     *
+     * <p>⚠️ 调用方必须保证 {@code activityIds} 非空 —— 空集合会生成
+     * {@code IN ()}，那是非法 SQL 而不是"匹配 0 行"。</p>
+     */
+    @Select("<script>"
+            + "SELECT DISTINCT activity_id, court_id FROM reservation "
+            + "WHERE activity_id IN "
+            + "<foreach collection='activityIds' item='aid' open='(' separator=',' close=')'>#{aid}</foreach> "
+            + "ORDER BY activity_id, court_id"
+            + "</script>")
+    List<ActivityCourtRow> findCourtIdsByActivityIds(@Param("activityIds") List<Long> activityIds);
 
     /**
      * 释放某活动名下全部「有效」占场（activity 取消 / 驳回时级联调用）。

@@ -10,6 +10,7 @@ import com.badmintoncommunity.module.activity.entity.Activity;
 import com.badmintoncommunity.module.activity.mapper.ActivityMapper;
 import com.badmintoncommunity.module.registration.entity.Registration;
 import com.badmintoncommunity.module.registration.mapper.RegistrationMapper;
+import com.badmintoncommunity.module.reservation.dto.ActivityCourtRow;
 import com.badmintoncommunity.module.reservation.entity.Reservation;
 import com.badmintoncommunity.module.reservation.mapper.ReservationMapper;
 import com.badmintoncommunity.module.reservation.service.TimeRules;
@@ -22,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 活动业务（api.md §5，business-flows 动作 5/6/9/10）。
@@ -155,6 +158,7 @@ public class ActivityService {
         long total = activityMapper.countByStatuses(statuses, startFrom, startTo);
         List<ActivityItemVO> list = activityMapper.listByStatuses(statuses, startFrom, startTo,
                 (page - 1) * pageSize, pageSize);
+        fillCourtIds(list);
         return new PageResult<>(list, total, page, pageSize);
     }
 
@@ -184,6 +188,7 @@ public class ActivityService {
         long total = activityMapper.countByCreator(userId, status);
         List<ActivityItemVO> list = activityMapper.listByCreator(userId, status,
                 (page - 1) * pageSize, pageSize);
+        fillCourtIds(list);
         return new PageResult<>(list, total, page, pageSize);
     }
 
@@ -304,6 +309,31 @@ public class ActivityService {
         }
         vo.setCourtIds(reservationMapper.findCourtIdsByActivityId(activityId));
         return vo;
+    }
+
+    /**
+     * 给列表项批量补 {@code court_ids}（列表页要显示"在哪片场打"）。
+     *
+     * <p><b>为什么不用 SQL join</b>：一个活动可占多块场，join 会把主表行数
+     * 打散成笛卡尔积（一个活动变 N 行），分页 {@code LIMIT} 立刻失真 ——
+     * 第 1 页拿到的活动数会比 page_size 少。所以走"主表分页 → 批量补字段"，
+     * 代价是每页多 1 次查询，与页大小无关（不是 N+1）。</p>
+     *
+     * <p>查不到占用行的活动（理论上不会发生，创建活动必定写占用）回填空列表
+     * 而不是 null —— 前端可以直接 {@code .length}，不必先判空。</p>
+     */
+    private void fillCourtIds(List<ActivityItemVO> list) {
+        if (list == null || list.isEmpty()) {
+            return;   // ⚠️ 必须先挡空：IN () 是非法 SQL，不是"匹配 0 行"
+        }
+        List<Long> activityIds = list.stream().map(ActivityItemVO::getId).toList();
+        Map<Long, List<Long>> byActivity = reservationMapper.findCourtIdsByActivityIds(activityIds)
+                .stream()
+                .collect(Collectors.groupingBy(ActivityCourtRow::getActivityId,
+                        Collectors.mapping(ActivityCourtRow::getCourtId, Collectors.toList())));
+        for (ActivityItemVO vo : list) {
+            vo.setCourtIds(byActivity.getOrDefault(vo.getId(), List.of()));
+        }
     }
 
     private boolean isAdmin(LoginUser me) {
