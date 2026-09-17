@@ -11,6 +11,12 @@ spring:
     username: root
     password: "123456"
     driver-class-name: com.mysql.cj.jdbc.Driver
+  servlet:
+    multipart:
+      # 默认上限只有 1MB，手机拍的头像很容易超 —— 调到 5MB
+      # （与 ResultCode.FILE_TOO_LARGE 的提示文案保持一致）
+      max-file-size: 5MB
+      max-request-size: 5MB
   jackson:
     time-zone: GMT+8
     serialization:
@@ -32,3 +38,16 @@ app:
     # 开发环境密钥（HS256 要求 >= 32 字节）；上线前必须改为环境变量注入
     secret: "badminton-community-dev-secret-key-please-change-in-prod-0123456789"
     expire-hours: 24
+  upload:
+    # 图片落盘目录。相对路径以「应用启动目录」为基准（本地开发即项目根目录）。
+    # 上线后若应用目录不可写，改这里指向独立磁盘即可，代码无需改动。
+    dir: ./uploads
+    # 对外访问前缀，必须与 WebConfig 里的静态资源映射保持一致
+    url-prefix: /api/files
+    # 允许的图片扩展名（小写、不含点）
+    allowed-extensions:
+      - jpg
+      - jpeg
+      - png
+      - webp
+      - gif

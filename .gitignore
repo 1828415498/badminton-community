@@ -38,6 +38,9 @@ build/
 ### 本机专用脚本（含数据库密码，禁止入库） ###
 fix-mysql-service.ps1
 
+### 用户上传的文件（运行时产物，不是源码） ###
+uploads/
+
 ### 前端（frontend/） ###
 frontend/node_modules/
 frontend/dist/

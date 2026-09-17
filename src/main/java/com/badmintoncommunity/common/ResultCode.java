@@ -37,6 +37,14 @@ public enum ResultCode {
     NOT_REGISTERED(200, "NOT_REGISTERED", "未报名该活动或已取消"),
     POST_NOT_FOUND(200, "POST_NOT_FOUND", "帖子不存在"),
 
+    // ---------- 文件上传 ----------
+    // 这三个归在"格式层"（HTTP 400）而不是"业务失败"（HTTP 200）：
+    // 选错格式/传太大是请求本身就不合法，不是业务规则拒绝。
+    FILE_EMPTY(400, "FILE_EMPTY", "请选择要上传的图片"),
+    FILE_TYPE_NOT_ALLOWED(400, "FILE_TYPE_NOT_ALLOWED", "只支持 JPG / PNG / WebP / GIF 格式的图片"),
+    FILE_TOO_LARGE(400, "FILE_TOO_LARGE", "图片大小不能超过 5MB"),
+    FILE_SAVE_FAILED(500, "FILE_SAVE_FAILED", "图片保存失败，请稍后重试"),
+
     // ---------- 传输/格式/认证/授权层 ----------
     PARAM_INVALID(400, "PARAM_INVALID", "参数不合法"),
     UNAUTHORIZED(401, "UNAUTHORIZED", "未认证或登录已失效"),

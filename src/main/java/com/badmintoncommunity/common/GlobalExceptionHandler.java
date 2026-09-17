@@ -9,6 +9,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * 全局异常处理（ADR-0009：Controller 不手工拼装返回对象）。
@@ -44,6 +45,19 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<Result<Void>> handleBadRequest(Exception e) {
         return ResponseEntity.badRequest().body(Result.fail(ResultCode.PARAM_INVALID));
+    }
+
+    /**
+     * 上传文件超过 spring.servlet.multipart.max-file-size 时，Spring 在进入 Controller
+     * <b>之前</b>就抛这个异常 —— 校验只能放在这里，Service 里根本收不到请求。
+     *
+     * <p>注意它必须排在最通用的 {@code Exception} 处理器之前被匹配：
+     * Spring 会自动选最具体的那个，所以顺序无所谓，但不能漏。</p>
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Result<Void>> handleUploadTooLarge(MaxUploadSizeExceededException e) {
+        return ResponseEntity.status(ResultCode.FILE_TOO_LARGE.getHttpStatus())
+                .body(Result.fail(ResultCode.FILE_TOO_LARGE));
     }
 
     @ExceptionHandler(Exception.class)
