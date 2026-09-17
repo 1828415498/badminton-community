@@ -26,6 +26,23 @@ const hashes = process.argv.slice(3).length
   ? process.argv.slice(3)
   : ['home', 'activities', 'venues', 'community', 'profile', 'activities/1']
 
+/**
+ * 拦一道"令牌传错"。
+ *
+ * 踩过：把 hash 当成 token 传进来（`npm run a11y /`），等于用 `token="/"` 跑。
+ * 后果不是报错，而是**一堆假通过** —— 未登录时公开页照样渲染、照样"0 违规"，
+ * 只有需要登录态才能在 DOM 里出现的弹层会静默漏掉，最后报一个语焉不详的"弹层未展开"。
+ * 所以宁可在这里直接停下，也不给一份看起来绿色的报告。
+ */
+if (!TOKEN || !TOKEN.includes('.')) {
+  console.error(
+    '\n❌ 用法：npm run a11y <TOKEN> [hash1 hash2 ...]\n' +
+      '   第一个参数必须是登录接口返回的 JWT（形如 xxx.yyy.zzz），不是页面 hash。\n' +
+      '   拿到它：POST /api/auth/login {username,password} → data.token\n'
+  )
+  process.exit(3)
+}
+
 const browser = await puppeteer.launch({
   executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe',
   headless: true,
@@ -140,19 +157,113 @@ function audit() {
   return { violations, opacityText }
 }
 
+/**
+ * 有些文字藏在弹层里，靠 URL 到不了。给这些路径配一个"先做点什么"的钩子，
+ * 否则弹层里的控件永远扫不到 —— 那是**假通过**，比不检查更危险。
+ */
+const OPENERS = {
+  profile: {
+    open: async (page) => {
+      // 先等触发按钮真的出现再点。原来固定 sleep 600ms —— 页面/接口稍慢就是"点了没反应"，
+      // 于是弹层扫不到、报成"检查无效"，让人以为是弹层坏了。等元素比等时间可靠。
+      const TRIGGER = () => [...document.querySelectorAll('button')].find(
+        (x) => x.textContent.trim() === '编辑资料'
+      )
+      try {
+        await page.waitForFunction(
+          (src) => new Function('return (' + src + ')()')(),
+          { timeout: 8000 },
+          TRIGGER.toString()
+        )
+      } catch (e) {
+        return false // 按钮都没出现，交给调用方判"无效"
+      }
+      await page.evaluate((src) => {
+        const btn = new Function('return (' + src + ')()')()
+        if (btn) btn.click()
+      }, TRIGGER.toString())
+      // 再等弹层里那个必须存在的元素，而不是固定 600ms
+      try {
+        await page.waitForSelector('.uploader', { timeout: 8000 })
+      } catch (e) {
+        return false
+      }
+      /**
+       * 🔴 元素"存在"不等于"已经看得见"。
+       * 弹层是带入场动画的（`opacity 0 → 1` 的 CSS transition），元素一 attach 就被扫的话，
+       * 沿祖先链合成出来的 opacity 还是 0 → 整片文字被报成"等效对比度 0:1"的假违规。
+       * （第一版固定 sleep 600ms 恰好躲过了动画，改成"等元素"之后反而全军覆没。）
+       *
+       * 这里等的正是 audit 自己要算的那个量：沿祖先链合成的有效 opacity。
+       * 比 `getAnimations()` 稳 —— 无限动画的 finished 永远不 resolve，且它不覆盖"还没开始"的过渡。
+       */
+      try {
+        await page.waitForFunction(
+          () => {
+            const el = document.querySelector('.sheet-panel') || document.querySelector('.uploader')
+            if (!el) return false
+            let o = 1
+            for (let x = el; x && x.nodeType === 1; x = x.parentElement) {
+              o *= parseFloat(getComputedStyle(x).opacity || '1')
+            }
+            return o > 0.99
+          },
+          { timeout: 8000 }
+        )
+      } catch (e) {
+        return false // 一直没变不透明，说明弹层没真正出现，判无效而不是硬扫
+      }
+      await new Promise((r) => setTimeout(r, 150))
+      return true
+    },
+    /** 打开后必须出现的东西：没出现就说明这一步没生效，本次结论作废 */
+    expect: '.uploader'
+  }
+}
+
+/** 每个页面查两遍：正常态 +（如果有钩子）弹层展开态 */
+const targets = []
+for (const h of hashes) {
+  targets.push({ hash: h, label: `/#/${h}` })
+  if (OPENERS[h]) {
+    targets.push({ hash: h, label: `/#/${h}（弹层展开）`, opener: OPENERS[h] })
+  }
+}
+
 let totalBad = 0
 let totalOpacity = 0
+/**
+ * "检查没跑成"必须和"查出违规"分开计数。
+ * 踩过：把"弹层未展开"折算成 1 项违规，于是①报告口径失真（看起来像对比度不合格）
+ * ②真正的失效原因（令牌不对/页面慢）被一个数字盖掉了。
+ * 两者都会让脚本非零退出，所以分开计数不会放过任何一次真失效。
+ */
+let totalInvalid = 0
 
-for (const hash of hashes) {
+for (const t of targets) {
   const page = await browser.newPage()
-  await page.evaluateOnNewDocument((t) => localStorage.setItem('token', t), TOKEN)
+  await page.evaluateOnNewDocument((tk) => localStorage.setItem('token', tk), TOKEN)
   await page.setViewport({ width: 1280, height: 940, deviceScaleFactor: 1 })
-  await page.goto('http://127.0.0.1:5173/#/' + hash, { waitUntil: 'networkidle2' })
+  await page.goto('http://127.0.0.1:5173/#/' + t.hash, { waitUntil: 'networkidle2' })
   await new Promise((r) => setTimeout(r, 1800))
+
+  if (t.opener) {
+    // 失败重试一次：这一步依赖"点开弹层"，偶发的慢加载不该直接判无效
+    let ok = await t.opener.open(page)
+    if (!ok) ok = await t.opener.open(page)
+    if (!ok || (t.opener.expect && !(await page.$(t.opener.expect)))) {
+      console.log(
+        `\n⚪ ${t.label} —— 弹层未展开（找不到 ${t.opener.expect}），本次检查无效（不是对比度违规）`
+      )
+      totalInvalid += 1
+      await page.close()
+      continue
+    }
+  }
 
   const { violations, opacityText } = await page.evaluate(audit)
   const ok = violations.length === 0 && opacityText.length === 0
-  console.log(`\n${ok ? '✅' : '⚠️'} /#/${hash}  —— 对比度违规 ${violations.length} 项，opacity 压暗文字 ${opacityText.length} 项`)
+  console.log(`\n${ok ? '✅' : '⚠️'} ${t.label}  —— 对比度违规 ${violations.length} 项，opacity 压暗文字 ${opacityText.length} 项`)
   for (const v of violations) {
     console.log(`   ❌ ${v.sel} "${v.text}"  ${v.ratio}:1 < ${v.need}:1  (${v.color} on ${v.bg}, ${v.size}px)`)
   }
@@ -165,7 +276,9 @@ for (const hash of hashes) {
 }
 
 console.log(
-  `\n──────────────────────────────\n合计：对比度违规 ${totalBad} 项，opacity 压暗 ${totalOpacity} 项`
+  `\n──────────────────────────────\n合计：对比度违规 ${totalBad} 项，opacity 压暗 ${totalOpacity} 项` +
+    (totalInvalid ? `，未能检查 ${totalInvalid} 项（报告不完整）` : '')
 )
 await browser.close()
-process.exitCode = totalBad + totalOpacity > 0 ? 2 : 0
+// 「未能检查」也让脚本失败 —— 报告不完整不能被读成"全绿"
+process.exitCode = totalBad + totalOpacity + totalInvalid > 0 ? 2 : 0

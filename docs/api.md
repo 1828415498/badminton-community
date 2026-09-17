@@ -445,7 +445,16 @@ data = {
 | start_to | 否 | 活动开始时间上限 |
 | page / page_size | 否 | 分页 |
 
-**Response**：列表元素 `{id, title, creator_id, creator_nickname, start_time, end_time, max_members, joined_count, status}`。`joined_count` 为 `status=1` 的报名行数，实时计算。
+**Response**：列表元素 `{id, title, creator_id, creator_nickname, start_time, end_time, max_members, joined_count, status, court_ids}`。`joined_count` 为 `status=1` 的报名行数，实时计算。
+
+> `court_ids` 与详情接口同义（占用的球场 id 数组）。列表带上它，是因为"在哪片场打"是用户挑球局时的决策信息之一 ——
+> 只有详情页才有场地，意味着用户必须逐场点进去才能比较。实现上由 Service 按 activityIds **批量补一次**
+> reservation 查询（不是 N+1，也不是 SQL join：join 会因一个活动占多块场而把分页行数打散）。
+> ⚠️ 它是 `court` 表的 id，**不是场号**，展示前必须用 `/venues/{id}/courts` 映射。
+
+**⚠️ 分页上限提醒**：`page_size` 被 `clampSize()` 封顶 **50**，且排序是 `ORDER BY start_time DESC`。
+所以"一次请求取一个较长时间窗"拿到的是窗口内**最晚的**那批数据 —— 想按天取数必须**按天分查**，
+否则会静默丢掉窗口靠前（更近）的球局。首页的 7 天日期条就是按此实现的（每天一个请求，用返回的 `total` 作为当天场次数）。
 
 **Failure**：`FORBIDDEN`（普通用户请求了非公开 status）。
 
@@ -851,6 +860,10 @@ HTTP 200
 | REGISTRATION_WINDOW_CLOSED | 200 | 报名窗口已关闭（已开始或已结束） |
 | NOT_REGISTERED | 200 | 未报名该活动或已取消 |
 | POST_NOT_FOUND | 200 | 帖子不存在（含已删除） |
+| FILE_EMPTY | 400 | 未选择要上传的文件 |
+| FILE_TYPE_NOT_ALLOWED | 400 | 不是允许的图片格式（扩展名 + 文件头双重校验） |
+| FILE_TOO_LARGE | 400 | 上传图片超过 5MB |
+| FILE_SAVE_FAILED | 500 | 服务端保存文件失败 |
 | PARAM_INVALID | 400 | 参数缺失/格式/枚举不合法 |
 | UNAUTHORIZED | 401 | 未认证或凭据失效 |
 | FORBIDDEN | 403 | 已认证但无权限（角色或资源归属不符） |
@@ -891,3 +904,57 @@ HTTP 200
 - 审核人必须为管理员等角色校验。
 
 > 典型示例：创建预约接口只收 `court_id / start_time / end_time`——「7 天窗口」「重叠 ≤2」「冲突」全部由 Service 判定并以业务码返回，前端不做任何限制性计算。
+
+---
+
+## 13. 文件上传 API
+
+> 本节为**后补**章节，放在末尾是为了不改动既有章节编号（`decisions.md` 多处按编号引用 §9 / §10）。
+> 上传是通用基础设施，当前服务于用户头像；将来社区发帖配图可直接复用。
+
+### 13.1 上传图片
+
+`POST /api/upload` —— **需登录**
+
+- Content-Type：`multipart/form-data`
+- 表单字段：`file`（单个文件）
+
+**成功（HTTP 200）**
+
+```json
+{
+  "code": "0",
+  "message": "success",
+  "data": {
+    "url": "/api/files/2026/09/568524a6bae040c99f6a574435ec62c1.png",
+    "name": "avatar.png",
+    "size": 1024
+  }
+}
+```
+
+`url` 是**相对路径**，直接写进 `<img src>`；存进 `user.avatar_url` 的也是它。
+用相对路径而不是完整域名，是为了让同一条数据在本地 / 测试 / 生产三套环境都能直接用，换域名时不用刷库。
+
+**限制与服务端约定**
+
+| 项 | 值 | 说明 |
+|---|---|---|
+| 允许格式 | jpg / jpeg / png / webp / gif | 扩展名与实际文件头（magic bytes）**双重校验**，改名伪装会被拒 |
+| 单文件上限 | 5MB | `spring.servlet.multipart.max-file-size` |
+| 存储位置 | `app.upload.dir`（默认 `./uploads`） | 按 `yyyy/MM` 分目录，避免单目录堆几十万文件 |
+| 文件名 | 服务端生成 UUID | **丢弃原始文件名**：同时防路径穿越、防编码问题、防重名覆盖 |
+
+**Failure**
+- `FILE_EMPTY`：未选择文件
+- `FILE_TYPE_NOT_ALLOWED`（400）：扩展名不在白名单，或文件头不是图片
+- `FILE_TOO_LARGE`（400）：超过 5MB（由 `MaxUploadSizeExceededException` 统一转译）
+- `UNAUTHORIZED`（401）：未登录
+
+### 13.2 读取已上传的图片
+
+`GET /api/files/{yyyy}/{MM}/{filename}` —— **匿名可访问**
+
+- 由 `WebConfig.addResourceHandlers` 映射到磁盘上的 `app.upload.dir`
+- **必须匿名**：浏览器加载 `<img>` 时不会携带 `Authorization` 头，若这条路径也要求认证，页面上所有头像都会变成裂图
+- 安全性由 **32 位随机文件名**兜底：猜不到即等同不公开。这也是「上传要身份、读取不要」这一取舍成立的前提
