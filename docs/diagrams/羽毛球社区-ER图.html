@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>羽毛球社区管理系统 · ER 图</title>
+<style>
+  :root{
+    --ink:#2C2C2A; --ink2:#444441; --ink3:#5F5E5A; --line:#D3D1C7;
+    --ent:#FFFFFF; --dia:#E1F5EE; --diaLine:#0F6E56; --fk:#185FA5; --card:#185FA5;
+    --bg:#FFFFFF; --soft:#F1EFE8;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:32px 28px 56px; background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1{font-size:22px;font-weight:600;margin:0 0 6px;letter-spacing:.2px}
+  .sub{font-size:13px;color:var(--ink3);margin:0 0 22px}
+  h2{font-size:15px;font-weight:600;margin:34px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+  .dia-wrap{border:1px solid var(--line);border-radius:12px;background:#FCFCFB;padding:10px;overflow:hidden}
+  svg{display:block;width:100%;height:auto}
+  .ent{fill:var(--ent);stroke:var(--ink);stroke-width:1.5}
+  .eT{font-size:16px;font-weight:600;fill:var(--ink)}
+  .aT{font-size:13.5px;fill:var(--ink2)}
+  .pk{font-weight:600;text-decoration:underline}
+  .fkT{font-size:12.5px;fill:var(--fk)}
+  .div{stroke:var(--line);stroke-width:1}
+  .dm{fill:var(--dia);stroke:var(--diaLine);stroke-width:1.5}
+  .dmT{font-size:13.5px;font-weight:600;fill:#085041}
+  .cn{stroke:#5F5E5A;stroke-width:1.5;fill:none}
+  .cd{font-size:14px;font-weight:600;fill:var(--card)}
+  .t1{font-size:25px;font-weight:600;fill:var(--ink)}
+  .t2{font-size:14px;fill:var(--ink3)}
+  .lg{font-size:13px;fill:var(--ink3)}
+  .lgT{font-size:13.5px;fill:var(--ink2)}
+  .rs{font-family:"Cascadia Mono",Consolas,"Courier New",monospace;font-size:13.5px;line-height:2.05;color:var(--ink2)}
+  .rs b{color:var(--ink);text-decoration:underline;font-weight:600}
+  .rs i{color:var(--fk);font-style:normal}
+  .rs .n{color:var(--ink3);font-size:12.5px}
+  table{border-collapse:collapse;font-size:13px;margin-top:4px}
+  th,td{border:1px solid var(--line);padding:6px 11px;text-align:left}
+  th{background:var(--soft);font-weight:600}
+  .note{font-size:13px;line-height:1.9;color:var(--ink2);background:#FCFCFB;border:1px solid var(--line);border-left:3px solid var(--diaLine);border-radius:8px;padding:13px 17px;margin-top:14px}
+  .note b{color:var(--ink)}
+  @media print{
+    body{padding:0}
+    .dia-wrap{border:none;background:#fff;padding:0}
+    h2{page-break-after:avoid}
+  }
+</style>
+</head>
+<body>
+
+<h1>羽毛球社区管理系统 · ER 图（实体-联系图）</h1>
+<p class="sub">矩形＝实体　·　菱形＝联系　·　连线上的 1 / N / M 为基数　·　实体框内主键加下划线　·　FK 标注引用方向</p>
+
+<div class="dia-wrap">
+<svg viewBox="0 0 1860 1440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="羽毛球社区管理系统 ER 图">
+  <title>羽毛球社区管理系统 ER 图</title>
+  <desc>六个实体 user、activity、post、comment、court、venue；九个联系：创建、报名、发布、点赞、占场、所属、预约、发表、包含。其中报名、点赞、预约、占场为多对多联系。</desc>
+
+  <!-- ===== 连线 ===== -->
+  <polyline class="cn" points="830,590 830,430 725,430"/>
+  <line class="cn" x1="575" y1="430" x2="450" y2="430"/>
+  <text class="cd" x="846" y="502" text-anchor="start">1</text>
+  <text class="cd" x="500" y="414" text-anchor="middle">N</text>
+
+  <polyline class="cn" points="400,430 400,540 565,540"/>
+  <polyline class="cn" points="715,540 790,540 790,590"/>
+  <text class="cd" x="416" y="492" text-anchor="start">N</text>
+  <text class="cd" x="806" y="568" text-anchor="start">M</text>
+
+  <polyline class="cn" points="1030,590 1030,430 1225,430"/>
+  <line class="cn" x1="1375" y1="430" x2="1480" y2="430"/>
+  <text class="cd" x="1046" y="502" text-anchor="start">1</text>
+  <text class="cd" x="1428" y="414" text-anchor="middle">N</text>
+
+  <polyline class="cn" points="1070,590 1070,540 1175,540"/>
+  <polyline class="cn" points="1325,540 1450,540 1450,430"/>
+  <text class="cd" x="1086" y="568" text-anchor="start">M</text>
+  <text class="cd" x="1466" y="488" text-anchor="start">N</text>
+
+  <polyline class="cn" points="220,430 220,600"/>
+  <polyline class="cn" points="220,710 220,880"/>
+  <text class="cd" x="236" y="478" text-anchor="start">M</text>
+  <text class="cd" x="236" y="852" text-anchor="start">N</text>
+
+  <polyline class="cn" points="1620,430 1620,600"/>
+  <polyline class="cn" points="1620,710 1620,880"/>
+  <text class="cd" x="1636" y="478" text-anchor="start">1</text>
+  <text class="cd" x="1636" y="852" text-anchor="start">N</text>
+
+  <polyline class="cn" points="830,814 830,880 635,880"/>
+  <line class="cn" x1="485" y1="880" x2="450" y2="880"/>
+  <text class="cd" x="846" y="852" text-anchor="start">M</text>
+  <text class="cd" x="450" y="908" text-anchor="middle">N</text>
+
+  <polyline class="cn" points="1030,814 1030,880 1155,880"/>
+  <line class="cn" x1="1305" y1="880" x2="1400" y2="880"/>
+  <text class="cd" x="1046" y="852" text-anchor="start">1</text>
+  <text class="cd" x="1340" y="908" text-anchor="middle">N</text>
+
+  <polyline class="cn" points="320,1040 320,1115"/>
+  <polyline class="cn" points="320,1225 320,1300"/>
+  <text class="cd" x="336" y="1078" text-anchor="start">1</text>
+  <text class="cd" x="336" y="1272" text-anchor="start">N</text>
+
+  <!-- ===== 联系：菱形 ===== -->
+  <polygon class="dm" points="650,375 725,430 650,485 575,430"/>
+  <text class="dmT" x="650" y="431" text-anchor="middle" dominant-baseline="central">创建</text>
+
+  <polygon class="dm" points="640,485 715,540 640,595 565,540"/>
+  <text class="dmT" x="640" y="541" text-anchor="middle" dominant-baseline="central">报名</text>
+
+  <polygon class="dm" points="1300,375 1375,430 1300,485 1225,430"/>
+  <text class="dmT" x="1300" y="431" text-anchor="middle" dominant-baseline="central">发布</text>
+
+  <polygon class="dm" points="1250,485 1325,540 1250,595 1175,540"/>
+  <text class="dmT" x="1250" y="541" text-anchor="middle" dominant-baseline="central">点赞</text>
+
+  <polygon class="dm" points="220,600 295,655 220,710 145,655"/>
+  <text class="dmT" x="220" y="656" text-anchor="middle" dominant-baseline="central">占场</text>
+
+  <polygon class="dm" points="1620,600 1695,655 1620,710 1545,655"/>
+  <text class="dmT" x="1620" y="656" text-anchor="middle" dominant-baseline="central">所属</text>
+
+  <polygon class="dm" points="560,825 635,880 560,935 485,880"/>
+  <text class="dmT" x="560" y="881" text-anchor="middle" dominant-baseline="central">预约</text>
+
+  <polygon class="dm" points="1230,825 1305,880 1230,935 1155,880"/>
+  <text class="dmT" x="1230" y="881" text-anchor="middle" dominant-baseline="central">发表</text>
+
+  <polygon class="dm" points="320,1115 395,1170 320,1225 245,1170"/>
+  <text class="dmT" x="320" y="1171" text-anchor="middle" dominant-baseline="central">包含</text>
+
+  <!-- ===== 实体：activity ===== -->
+  <rect class="ent" x="150" y="140" width="340" height="290" rx="8"/>
+  <text class="eT" x="320" y="166" text-anchor="middle">activity　活动</text>
+  <line class="div" x1="162" y1="178" x2="478" y2="178"/>
+  <text class="aT pk" x="168" y="200">id</text>
+  <text class="aT" x="168" y="222">creator_id<tspan class="fkT">　FK → user</tspan></text>
+  <text class="aT" x="168" y="244">title</text>
+  <text class="aT" x="168" y="266">description</text>
+  <text class="aT" x="168" y="288">start_time</text>
+  <text class="aT" x="168" y="310">end_time</text>
+  <text class="aT" x="168" y="332">max_members</text>
+  <text class="aT" x="168" y="354">status</text>
+  <text class="aT" x="168" y="376">reviewer_id<tspan class="fkT">　FK → user</tspan></text>
+  <text class="aT" x="168" y="398">review_time</text>
+  <text class="aT" x="168" y="420">reject_reason</text>
+
+  <!-- ===== 实体：user ===== -->
+  <rect class="ent" x="760" y="590" width="340" height="224" rx="8"/>
+  <text class="eT" x="930" y="616" text-anchor="middle">user　用户</text>
+  <line class="div" x1="772" y1="628" x2="1088" y2="628"/>
+  <text class="aT pk" x="778" y="650">id</text>
+  <text class="aT" x="778" y="672">username<tspan class="fkT">　唯一</tspan></text>
+  <text class="aT" x="778" y="694">password_hash</text>
+  <text class="aT" x="778" y="716">nickname</text>
+  <text class="aT" x="778" y="738">avatar_url</text>
+  <text class="aT" x="778" y="760">role</text>
+  <text class="aT" x="778" y="782">create_time</text>
+  <text class="aT" x="778" y="804">update_time</text>
+
+  <!-- ===== 实体：post ===== -->
+  <rect class="ent" x="1370" y="250" width="340" height="180" rx="8"/>
+  <text class="eT" x="1540" y="276" text-anchor="middle">post　帖子</text>
+  <line class="div" x1="1382" y1="288" x2="1698" y2="288"/>
+  <text class="aT pk" x="1388" y="310">id</text>
+  <text class="aT" x="1388" y="332">user_id<tspan class="fkT">　FK → user</tspan></text>
+  <text class="aT" x="1388" y="354">title</text>
+  <text class="aT" x="1388" y="376">content</text>
+  <text class="aT" x="1388" y="398">create_time</text>
+  <text class="aT" x="1388" y="420">update_time</text>
+
+  <!-- ===== 实体：comment ===== -->
+  <rect class="ent" x="1370" y="880" width="340" height="160" rx="8"/>
+  <text class="eT" x="1540" y="906" text-anchor="middle">comment　评论</text>
+  <line class="div" x1="1382" y1="918" x2="1698" y2="918"/>
+  <text class="aT pk" x="1388" y="940">id</text>
+  <text class="aT" x="1388" y="962">post_id<tspan class="fkT">　FK → post</tspan></text>
+  <text class="aT" x="1388" y="984">user_id<tspan class="fkT">　FK → user</tspan></text>
+  <text class="aT" x="1388" y="1006">content</text>
+  <text class="aT" x="1388" y="1028">create_time</text>
+
+  <!-- ===== 实体：court ===== -->
+  <rect class="ent" x="150" y="880" width="340" height="160" rx="8"/>
+  <text class="eT" x="320" y="906" text-anchor="middle">court　球场</text>
+  <line class="div" x1="162" y1="918" x2="478" y2="918"/>
+  <text class="aT pk" x="168" y="940">id</text>
+  <text class="aT" x="168" y="962">venue_id<tspan class="fkT">　FK → venue</tspan></text>
+  <text class="aT" x="168" y="984">name</text>
+  <text class="aT" x="168" y="1006">status<tspan class="fkT">　1可约 / 2停用</tspan></text>
+  <text class="aT" x="168" y="1028">create_time</text>
+
+  <!-- ===== 实体：venue ===== -->
+  <rect class="ent" x="150" y="1300" width="340" height="120" rx="8"/>
+  <text class="eT" x="320" y="1326" text-anchor="middle">venue　场馆</text>
+  <line class="div" x1="162" y1="1338" x2="478" y2="1338"/>
+  <text class="aT pk" x="168" y="1360">id</text>
+  <text class="aT" x="168" y="1382">name</text>
+  <text class="aT" x="168" y="1404">address</text>
+
+  <!-- ===== 图例 ===== -->
+  <rect x="760" y="1180" width="340" height="230" rx="8" fill="#FCFCFB" stroke="#D3D1C7" stroke-width="1"/>
+  <text class="lgT" x="782" y="1212" font-weight="600" fill="#2C2C2A">图例</text>
+  <rect x="782" y="1228" width="34" height="22" rx="4" class="ent"/>
+  <text class="lg" x="832" y="1244">实体（对应一张表）</text>
+  <polygon class="dm" points="799,1274 819,1286 799,1298 779,1286"/>
+  <text class="lg" x="832" y="1291">联系</text>
+  <text class="cd" x="799" y="1324" text-anchor="middle">1 : N</text>
+  <text class="lg" x="832" y="1329">一对多联系</text>
+  <text class="cd" x="799" y="1358" text-anchor="middle">M : N</text>
+  <text class="lg" x="832" y="1363">多对多联系</text>
+  <text class="aT pk" x="784" y="1396">id</text>
+  <text class="lg" x="832" y="1396">主键（加下划线）</text>
+</svg>
+</div>
+
+<h2>关系模式（主键加下划线，箭头为外键引用）</h2>
+<div class="rs">
+user (<b>id</b>, username, password_hash, nickname, avatar_url, role, create_time, update_time)<br>
+venue (<b>id</b>, name, address, create_time, update_time)<br>
+court (<b>id</b>, <i>venue_id</i>, name, status, create_time, update_time) <span class="n">→ venue(id)</span><br>
+activity (<b>id</b>, <i>creator_id</i>, title, description, start_time, end_time, max_members, status, <i>reviewer_id</i>, review_time, reject_reason, create_time, update_time) <span class="n">→ user(id)</span><br>
+post (<b>id</b>, <i>user_id</i>, title, content, create_time, update_time) <span class="n">→ user(id)</span><br>
+comment (<b>id</b>, <i>post_id</i>, <i>user_id</i>, content, create_time) <span class="n">→ post(id), user(id)</span><br>
+registration (<b>id</b>, <i>user_id</i>, <i>activity_id</i>, status, create_time, update_time) <span class="n">→ user(id), activity(id)；用户+活动唯一</span><br>
+post_like (<b>post_id</b>, <b>user_id</b>, create_time) <span class="n">→ post(id), user(id)；复合主键</span><br>
+reservation (<b>id</b>, <i>court_id</i>, <i>user_id</i>, <i>activity_id</i>, start_time, end_time, status, cancel_time, create_time, update_time) <span class="n">→ court(id), user(id), activity(id)</span>
+</div>
+
+<h2>四个多对多联系 → 实现时落了哪些表</h2>
+<table>
+  <tr><th>联系（菱形）</th><th>两端</th><th>基数</th><th>落成的表</th><th>说明</th></tr>
+  <tr><td>报名</td><td>user – activity</td><td>M : N</td><td>registration</td><td>代理主键 + (user_id, activity_id) 唯一约束</td></tr>
+  <tr><td>点赞</td><td>user – post</td><td>M : N</td><td>post_like</td><td>复合主键 (post_id, user_id)，一人一帖一赞</td></tr>
+  <tr><td>预约</td><td>user – court</td><td>M : N</td><td rowspan="2">reservation</td><td rowspan="2">两个联系合并成同一张场地占用台账，用 user_id / activity_id <b>二选一</b> 区分</td></tr>
+  <tr><td>占场</td><td>activity – court</td><td>M : N</td></tr>
+</table>
+
+<div class="note">
+  <b>为什么最后两个 M : N 没有各建一张表？</b><br>
+  因为「同一球场同一时段只能有一条有效占用」是一个<b>全局不变量</b>，不管这次占用来自个人预约还是活动占场。
+  如果两类占用分在两张表里，判定冲突就要 UNION 两张表、再分别加锁，竞态窗口直接翻倍；
+  收进同一张 <b>reservation</b> 台账，不变量就只有一个地方需要守。<br>
+  代价是这张表承担了两种语义 —— 所以建表时用一条 CHECK 约束把它钉死：<br>
+  <span style="font-family:Consolas,monospace;font-size:12.5px">CONSTRAINT chk_reservation_owner CHECK ((user_id IS NULL) &lt;&gt; (activity_id IS NULL))</span><br>
+  「个人预约」行的 activity_id 必空，「活动占场」行的 user_id 必空，两者不可能都有或都没有。
+</div>
+
+</body>
+</html>

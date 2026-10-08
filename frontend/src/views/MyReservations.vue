@@ -1,7 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { myReservations, cancelReservation } from '@/api/reservation'
+
+const router = useRouter()
 
 const FILTERS = [
   { label: '全部', value: null },
@@ -65,6 +68,18 @@ function hhmm(iso) {
   return String(iso).slice(11, 16)
 }
 
+/**
+ * 打开预约凭证（报表打印页）。
+ *
+ * 新标签打开，而不是当前页跳转：打印页会把整页交给浏览器排版，
+ * 放在当前标签会打断"列表 → 详情 → 返回"的浏览动线。
+ * 是否允许打印由后端判定（本人或管理员），这里只是入口。
+ */
+function openReceipt(row) {
+  const { href } = router.resolve({ name: 'print-reservation', params: { id: row.id } })
+  window.open(href, '_blank', 'noopener')
+}
+
 onMounted(load)
 </script>
 
@@ -119,8 +134,9 @@ onMounted(load)
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="120" align="right">
+        <el-table-column label="操作" width="176" align="right">
           <template #default="{ row }">
+            <el-button type="primary" link @click="openReceipt(row)">打印凭证</el-button>
             <el-button v-if="canCancel(row)" type="danger" link @click="doCancel(row)">
               取消预约
             </el-button>

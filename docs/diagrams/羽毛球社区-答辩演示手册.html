@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>羽毛球社区管理系统 · 答辩演示手册</title>
+<style>
+  :root{
+    --ink:#1A1A18;
+    --ink-2:#4A4A45;
+    --ink-3:#77776F;
+    --line:#E4E2DA;
+    --line-2:#D0CEC5;
+    --bg:#FFFFFF;
+    --bg-2:#FAFAF7;
+    --bg-3:#F4F3EE;
+    --brand:#B8E62E;
+    --brand-soft:#EFFAD0;
+    --warn:#B4551A;
+    --warn-soft:#FDF3E7;
+    --danger:#A32B2B;
+    --danger-soft:#FBEDED;
+    --ok:#2F6B3A;
+    --ok-soft:#EDF6EE;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;
+    font-size:14px;line-height:1.75;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:44px 40px 80px;}
+
+  /* ---------- 页头 ---------- */
+  header.doc-head{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:8px;}
+  .eyebrow{font-size:12px;letter-spacing:.14em;color:var(--ink-3);margin-bottom:10px;}
+  h1{font-size:29px;line-height:1.3;margin:0 0 10px;letter-spacing:-.01em;}
+  .lede{font-size:15px;color:var(--ink-2);margin:0 0 18px;max-width:660px;}
+  .facts{display:flex;flex-wrap:wrap;gap:8px;}
+  .fact{
+    font-size:12.5px;padding:4px 11px;border-radius:999px;
+    background:var(--bg-3);color:var(--ink-2);border:1px solid var(--line);
+  }
+  .fact b{color:var(--ink);font-weight:600;}
+
+  /* ---------- 章节 ---------- */
+  h2{
+    font-size:19px;margin:46px 0 6px;padding-top:18px;
+    border-top:1px solid var(--line);letter-spacing:-.01em;
+  }
+  h2 .num{
+    display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;
+    background:var(--ink);color:#fff;border-radius:7px;font-size:13px;
+    margin-right:9px;vertical-align:2px;font-weight:600;
+  }
+  h2 + .sub{color:var(--ink-3);font-size:13px;margin:0 0 20px;}
+  h3{font-size:15.5px;margin:26px 0 8px;}
+
+  /* ---------- 表格 ---------- */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px;}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top;}
+  th{background:var(--bg-3);font-weight:600;color:var(--ink-2);white-space:nowrap;}
+  td code,p code,li code{background:var(--bg-3);padding:1px 5px;border-radius:4px;font-size:12.5px;
+    font-family:ui-monospace,Consolas,"Courier New",monospace;color:var(--ink);}
+  tr.hi td{background:var(--brand-soft);}
+
+  /* ---------- 代码块 ---------- */
+  pre{
+    background:#20211E;color:#E8E6E0;padding:13px 15px;border-radius:8px;
+    overflow-x:auto;font-size:12.5px;line-height:1.65;margin:12px 0;
+    font-family:ui-monospace,Consolas,"Courier New",monospace;
+  }
+  pre code{background:none;color:inherit;padding:0;}
+
+  /* ---------- 幕次卡片 ---------- */
+  .act{
+    border:1px solid var(--line);border-left:4px solid var(--ink);
+    border-radius:0 9px 9px 0;padding:16px 20px 18px;margin:16px 0;
+    background:var(--bg);break-inside:avoid;
+  }
+  .act.key{border-left-color:var(--brand);background:linear-gradient(90deg,var(--brand-soft) 0%,#fff 46%);}
+  .act.gap{border-left-color:var(--warn);}
+  .act-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
+  .act-title{font-size:16px;font-weight:600;letter-spacing:-.01em;}
+  .tag{
+    font-size:11.5px;padding:2px 8px;border-radius:5px;background:var(--bg-3);
+    color:var(--ink-2);border:1px solid var(--line);white-space:nowrap;
+  }
+  .tag.key{background:var(--brand);border-color:var(--brand);color:#1A1A18;font-weight:600;}
+  .tag.warn{background:var(--warn-soft);border-color:#EBCFB2;color:var(--warn);}
+  .tag.min{background:var(--bg-3);color:var(--ink-3);}
+  .act-goal{color:var(--ink-3);font-size:12.5px;margin:2px 0 12px;}
+
+  blockquote{
+    margin:12px 0;padding:11px 15px;background:var(--bg-2);
+    border-left:3px solid var(--line-2);border-radius:0 7px 7px 0;
+    color:var(--ink);font-size:13.5px;
+  }
+  blockquote p{margin:0 0 8px;}
+  blockquote p:last-child{margin-bottom:0;}
+  blockquote .who{display:block;font-size:11.5px;color:var(--ink-3);margin-bottom:5px;letter-spacing:.06em;}
+
+  .steps{margin:10px 0;padding-left:0;list-style:none;counter-reset:s;}
+  .steps li{counter-increment:s;position:relative;padding-left:27px;margin:5px 0;font-size:13.5px;}
+  .steps li::before{
+    content:counter(s);position:absolute;left:0;top:1px;
+    width:18px;height:18px;line-height:18px;text-align:center;border-radius:5px;
+    background:var(--ink);color:#fff;font-size:11px;font-weight:600;
+  }
+  ul.plain{margin:8px 0;padding-left:19px;}
+  ul.plain li{margin:4px 0;font-size:13.5px;}
+
+  .note{
+    background:var(--warn-soft);border:1px solid #EBCFB2;border-radius:8px;
+    padding:11px 15px;margin:14px 0;font-size:13px;color:#6B3A10;
+  }
+  .note b{color:var(--warn);}
+  .okbox{
+    background:var(--ok-soft);border:1px solid #C9E0CD;border-radius:8px;
+    padding:11px 15px;margin:14px 0;font-size:13px;color:#245029;
+  }
+  .danger{
+    background:var(--danger-soft);border:1px solid #E8C4C4;border-radius:8px;
+    padding:11px 15px;margin:14px 0;font-size:13px;color:#6E1C1C;
+  }
+  .danger b{color:var(--danger);}
+
+  .qa{border-top:1px solid var(--line);padding:15px 0;}
+  .qa:last-child{border-bottom:1px solid var(--line);}
+  .q{font-weight:600;margin:0 0 7px;font-size:14px;}
+  .q .n{color:var(--ink-3);font-weight:600;margin-right:6px;}
+  .a{margin:0;color:var(--ink-2);font-size:13.5px;}
+  .a strong{color:var(--ink);}
+
+  footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px;}
+
+  @media print{
+    body{font-size:11.5px;}
+    .wrap{max-width:none;padding:0 14mm;}
+    h2{page-break-after:avoid;}
+    .act,.qa,table,.note,.okbox{break-inside:avoid;}
+    pre{background:#F4F3EE;color:#1A1A18;border:1px solid var(--line);}
+    .tag.key{border:1px solid #8FBF00;}
+    @page{size:A4;margin:14mm;}
+  }
+  @media (max-width:640px){
+    .wrap{padding:26px 18px 60px;}
+    h1{font-size:23px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc-head">
+  <div class="eyebrow">专业综合设计 · 答辩演示手册</div>
+  <h1>羽毛球社区管理系统</h1>
+  <p class="lede">回答一个具体问题：<b>今晚能不能打上球</b>。系统围绕两条线建 —— 找场地（预约）与找人（球局报名），场地占用统一收进一张台账。</p>
+  <div class="facts">
+    <span class="fact"><b>9</b> 张表</span>
+    <span class="fact"><b>39</b> 个接口</span>
+    <span class="fact"><b>58</b> 个自动化测试（全绿）</span>
+    <span class="fact">Spring Boot 3.3.5 + MyBatis + MySQL 8</span>
+    <span class="fact">Vue 3 + Element Plus</span>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<h2><span class="num">0</span>演示前 10 分钟</h2>
+<p class="sub">按顺序做，缺一步就可能现场卡住。</p>
+
+<h3>① 刷新演示数据 <span class="tag warn">最关键</span></h3>
+<p>种子数据里的活动日期是固定的，一旦当天日期越过它们，首页就会出现「今天没有球局」、时间表全灰、没有可报名的活动。<b>答辩当天早上跑一次</b>，数据就是"当天"的：</p>
+<pre><code>mysql -uroot -p123456 --default-character-set=utf8mb4 badminton_community &lt; D:\Projects\badminton-community\sql\demo-refresh.sql</code></pre>
+<p>脚本用 <code>CURDATE()</code> 相对生成，任何一天执行都合适；可重复执行。</p>
+
+<h3>② 启动后端</h3>
+<pre><code>cd D:\Projects\badminton-community
+mvn spring-boot:run</code></pre>
+
+<h3>③ 启动前端</h3>
+<pre><code>cd D:\Projects\badminton-community\frontend
+npm run dev</code></pre>
+
+<h3>④ 账号（<b>全部密码 123456</b>）</h3>
+<table>
+  <tr><th>用户名</th><th>昵称</th><th>角色</th><th>演示用途</th></tr>
+  <tr class="hi"><td><code>admin123</code></td><td>管理员</td><td>管理员</td><td>主场：<b>只有它能看到右上角 / 头像菜单里的「管理台」</b></td></tr>
+  <tr><td><code>player01</code></td><td>小林</td><td>普通用户</td><td>演示"别人"的视角</td></tr>
+  <tr><td><code>player02</code></td><td>阿杰</td><td>普通用户</td><td>演示发起人视角</td></tr>
+</table>
+
+<h3>⑤ 刷新后的数据现状</h3>
+<table>
+  <tr><th>数据</th><th>条数</th><th>状态</th></tr>
+  <tr><td>活动</td><td>5</td><td>已发布 3（<b>今天 1 · 明天 1 · 后天 1</b>）· 待审核 1 · 已结束 1</td></tr>
+  <tr><td>场地占用</td><td>14</td><td>活动占场 8 + 个人预约 6（5 条可取消 · 1 条历史可打凭证）</td></tr>
+  <tr><td>报名</td><td>7</td><td>已发布活动均含创建者自动报名</td></tr>
+  <tr><td>帖子 / 评论 / 点赞</td><td>4 / 4 / 4</td><td>社区线可完整演示</td></tr>
+</table>
+
+<div class="note">
+  <b>从 WorkBuddy 启动后端才会踩的坑：</b>它会向子进程注入 <code>SERVER__PORT=53333</code>，优先级高于 <code>application.yml</code>，而该端口被它自己占着 → 启动失败。<br>
+  解法：启动前加 <code>$env:SERVER__PORT="8080"</code>。<b>你自己在普通终端启动不受影响，答辩时不用管这条。</b>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">1</span>分幕脚本</h2>
+<p class="sub">共 10 幕，按 PPT 的节序走。每幕给了"操作 + 讲解词"，讲解词可直接照说。</p>
+
+<!-- 第 1 幕 -->
+<div class="act">
+  <div class="act-head">
+    <span class="act-title">第 1 幕 · 开场</span>
+    <span class="tag min">PPT 第 2 页 · 目标定义</span>
+    <span class="tag min">约 30 秒</span>
+  </div>
+  <p class="act-goal">定调：这是一个解决真实问题的系统，不是功能堆砌。</p>
+  <p><b>操作：</b>打开首页，指顶部那一行「今天还有 N 场球 · 还缺 M 人」。</p>
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>我做的是一个羽毛球社区管理系统。要解决的问题很具体：一个球友打开手机，只想确认一件事——<b>今晚能不能打上球</b>。所以系统围绕两条线建：找场地（预约）和找人（球局报名）。首页不放大数字统计，第一眼就告诉你今天有几场、还差不差人。</p>
+  </blockquote>
+</div>
+
+<!-- 第 2 幕 -->
+<div class="act">
+  <div class="act-head">
+    <span class="act-title">第 2 幕 · ER 图</span>
+    <span class="tag">PPT 第一节</span>
+    <span class="tag min">约 2 分钟</span>
+  </div>
+  <p class="act-goal">交代实体与联系，重点标出四个 M:N。</p>
+  <p><b>打开：</b><code>羽毛球社区-ER图.html</code></p>
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>9 张表对应 6 个实体、9 个联系。这里我要特别指出<b>四个多对多联系</b>（红色的菱形）：报名（用户×活动）、点赞（用户×帖子）、预约（用户×场地）、占场（活动×场地）。</p>
+    <p>在 ER 图里它们是菱形，落库时前两个各变成一张联系表；<b>后两个我合并进了同一张占用台账</b>——这是第 6、7 幕要讲的。</p>
+  </blockquote>
+  <p><b>指给老师看：</b>四个红色 M:N 菱形，以及实体框内带下划线的主键。</p>
+</div>
+
+<!-- 第 3 幕 -->
+<div class="act">
+  <div class="act-head">
+    <span class="act-title">第 3 幕 · 数据表设计</span>
+    <span class="tag">PPT 第二节</span>
+    <span class="tag min">约 2 分钟</span>
+  </div>
+  <p class="act-goal">讲清 9 张表的划分依据，以及"不设导出项"。</p>
+  <p><b>打开：</b><code>羽毛球社区-关系模型明细.html</code></p>
+  <table>
+    <tr><th>表的类型</th><th>表</th><th>ER 图里画什么</th></tr>
+    <tr><td>实体表</td><td>user / venue / court / activity / post / comment</td><td>矩形</td></tr>
+    <tr><td>M:N 落成的联系表</td><td>registration / post_like</td><td>菱形</td></tr>
+    <tr class="hi"><td><b>合并表</b></td><td>reservation</td><td>两个菱形合成一张</td></tr>
+  </table>
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>判断标准是：<b>有没有独立的代理主键、承载的是"东西"还是"关系"</b>。</p>
+    <p>还有一条我特意遵守了：<b>表里不出现任何"能算出来"的字段</b>。点赞数、报名人数我一个都没建字段——全部用视图实时 COUNT。因为一旦落成字段，就必然出现"点赞表加了行、计数字段忘了更新"的不一致。</p>
+  </blockquote>
+  <p><b>指给老师看：</b><code>post</code> 卡片下方那行「本表没有 status，也没有 like_count」。</p>
+</div>
+
+<!-- 第 4 幕 -->
+<div class="act">
+  <div class="act-head">
+    <span class="act-title">第 4 幕 · 实体表增删改查</span>
+    <span class="tag">PPT 第三节 (1)</span>
+    <span class="tag min">约 3 分钟</span>
+  </div>
+  <p class="act-goal">证明"增"用了控件、"删"有确认框且受完整性约束。</p>
+  <table>
+    <tr><th>动作</th><th>操作路径</th><th>讲解要点</th></tr>
+    <tr><td><b>增</b></td><td>退出登录 → 注册页，注册一个新用户</td><td>不是全文本框裸填：有长度校验、重复校验</td></tr>
+    <tr><td><b>改</b></td><td>个人资料 → 编辑资料：改昵称 + 传头像</td><td>头像是文件上传，不是填 URL</td></tr>
+    <tr><td><b>删</b></td><td>社区 → 打开自己发的帖 → 删除帖子</td><td><b>弹确认框</b>，并提示"评论和点赞一并清除"</td></tr>
+    <tr><td><b>查</b></td><td>我的预约 → 切换状态筛选</td><td>列表支持按状态过滤</td></tr>
+  </table>
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>删除我统一用确认框，而且都受完整性约束。删帖子会连带清掉它的评论和点赞——这是数据库的外键 <code>ON DELETE CASCADE</code> 做的，不是前端删两次。</p>
+  </blockquote>
+  <div class="okbox">
+    <b>资源类实体（球场）的增删改在「第 7 幕 · 管理台」演示</b> —— 它们归管理员，入口在右上角头像菜单里。
+  </div>
+</div>
+
+<!-- 第 5 幕 -->
+<div class="act">
+  <div class="act-head">
+    <span class="act-title">第 5 幕 · 联系表操作 + 视图</span>
+    <span class="tag">PPT 第三节 (2)</span>
+    <span class="tag min">约 3 分钟</span>
+  </div>
+  <p class="act-goal">演示 M:N 落成的表怎么增删，以及"视图的完整查询"。</p>
+
+  <p><b>（a）报名 · M:N 落成的表</b></p>
+  <ul class="plain">
+    <li>操作：首页 → 找到「今晚双打，还差 3 人」→ 点「加入球局」</li>
+  </ul>
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>加入球局写的是 <code>registration</code> 表——用户与活动的多对多联系。一条 <code>uk_registration_user_activity</code> 唯一约束保证一个人报不了两次。</p>
+  </blockquote>
+
+  <p><b>（b）预约 · 写进占用台账</b></p>
+  <ul class="plain">
+    <li>操作：场地 → 在时间表上点两个空格定起止 → 确认预约</li>
+  </ul>
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>点两个空格确定起止时段，写进 <code>reservation</code>。同一块场、同一时段只能有一条有效占用——靠 <code>SELECT ... FOR UPDATE</code> 加锁判冲突，不是靠唯一约束，因为"已取消"的行还留在表里。</p>
+  </blockquote>
+
+  <p><b>（c）查 · 视图（PPT 明确点名的一项）</b></p>
+  <p>打开 MySQL 命令行执行：</p>
+  <pre><code>SELECT * FROM v_reservation_detail LIMIT 10;</code></pre>
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>占用表里存的全是编号——球场 id、用户 id、活动 id，直接查读不懂。所以我定义了视图 <code>v_reservation_detail</code>，把场馆名、球场名、占用方、来源、时长、状态文本一次 JOIN 出来。</p>
+    <p><b>我系统里的「打印凭证」就是查这条视图出来的</b>——视图不是躺在 SQL 文件里看的，它真的在给系统供数。</p>
+  </blockquote>
+  <p><b>加分句：</b>另外两条视图 <code>v_post_with_stats</code>（帖子+评论数+点赞数）和 <code>v_activity_signup_stat</code>（报名进度），正是"点赞数、报名人数不该建字段"的正面教材。</p>
+</div>
+
+<!-- 第 6 幕 -->
+<div class="act key">
+  <div class="act-head">
+    <span class="act-title">第 6 幕 · 引进虚实体</span>
+    <span class="tag key">最重要的考点</span>
+    <span class="tag">PPT 第四节</span>
+    <span class="tag min">约 4 分钟</span>
+  </div>
+  <p class="act-goal">讲清"为什么把活动拆成头 + 明细"，并在现场真的录一次主从表。</p>
+
+  <p><b>先讲原理：</b></p>
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>一个活动常常要占<b>多块场</b>。如果我把"活动占场"也做成一张普通的联系表，一次占 3 块场就要写 3 行——活动的时间、人数上限、审核状态就要重复 3 遍。这是<b>重复录入和数据冗余</b>：改一次开始时间，要改 3 行。</p>
+    <p>所以我把「活动」提升成一个<b>虚实体</b>（头表），把"占哪几块场"降为它的<b>明细</b>。一次创建 = <b>1 条活动 + N 条占用行</b>，包在同一个事务里。</p>
+  </blockquote>
+
+  <p><b>现场操作：</b></p>
+  <ol class="steps">
+    <li>球局 → 发起球局</li>
+    <li>填标题、描述</li>
+    <li>选开始 / 结束时间 —— <b>日期时间控件</b>，自动对齐整点</li>
+    <li>填人数上限 —— <b>数字控件</b></li>
+    <li><b>选择球场：勾选任意多块</b> ← 这就是"明细行数不固定"</li>
+    <li>提交 → 弹确认框 → 确认</li>
+  </ol>
+
+  <p><b>验证落库</b>（可切到命令行，当场看）：</p>
+  <pre><code>SELECT id, title, status FROM activity ORDER BY id DESC LIMIT 1;
+SELECT court_id, start_time, end_time
+  FROM reservation WHERE activity_id = &lt;刚创建的活动 id&gt;;</code></pre>
+  <p>会看到：<b>1 条 activity + N 条 reservation</b>（<code>activity_id</code> 有值、<code>user_id</code> 为 NULL）。</p>
+
+  <div class="okbox">
+    <b>这一句最值钱：</b>"这不是我事后补的，是我建表时就这么设计的——所以我至今不需要写任何'同步'代码。"
+  </div>
+</div>
+
+<!-- 第 7 幕（新增）· 管理台 -->
+<div class="act key">
+  <div class="act-head">
+    <span class="act-title">第 7 幕 · 管理台：审核与球场维护</span>
+    <span class="tag key">补上状态流转</span>
+    <span class="tag">PPT 第三节 (1)</span>
+    <span class="tag min">约 3 分钟</span>
+  </div>
+  <p class="act-goal">把"发起活动"接下去 —— 审核通过后才开放报名；顺带补完实体表的增 / 改。</p>
+
+  <p><b>入口：</b>右上角头像 → 「管理台」（只有管理员看得到这一项）</p>
+
+  <p><b>（a）审核球局</b> —— 刚才发起的那场正在这里等着：</p>
+  <ol class="steps">
+    <li>在「待审核球局」里找到刚提交的那场（或预留的「今晚临时加一场」）</li>
+    <li>点「驳回」→ 弹出输入框，<b>必须填原因</b>（原因会存进 <code>reject_reason</code> 并展示给发起人）→ 场地释放</li>
+    <li>换一场点「通过」→ 确认框 → 活动转为「报名中」，报名开放</li>
+    <li>回到球局详情，报名按钮已经能点了</li>
+  </ol>
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>审核是这套设计里唯一的状态流转。驳回必须给原因 —— 不是只改一个状态码，而是让发起人知道"哪里不合规"。驳回和取消都会自动释放场地。</p>
+  </blockquote>
+
+  <p><b>（b）球场维护</b> —— 实体表的增 / 改 / 停用：</p>
+  <table>
+    <tr><th>动作</th><th>操作</th><th>讲解要点</th></tr>
+    <tr><td><b>增</b></td><td>「新增球场」→ 输入名称</td><td>同场馆重名会被唯一索引 <code>uk_court_venue_name</code> 挡下</td></tr>
+    <tr><td><b>改</b></td><td>「改名」→ 输入新名</td><td>同样受唯一约束</td></tr>
+    <tr><td><b>停用</b></td><td>「停用」</td><td><b>该场地有未来有效预约时，后端会拒绝</b></td></tr>
+    <tr><td><b>启用</b></td><td>「启用」</td><td>恢复可预约</td></tr>
+  </table>
+
+  <div class="okbox">
+    <b>一个很好的演示技巧：</b>直接停用 1 号场会被<b>拒绝</b>（它今天有活动占场）—— 这一下就把"完整性约束"演活了。<br>
+    想演示"停用成功"，就现场<b>新增一块 7 号场再停用它</b>：新场地没有预约，一次通过。这样"被拒绝"和"成功"两种结果都演到了。
+  </div>
+
+  <div class="note">
+    <b>老师可能追问权限：</b>前端隐藏菜单只是体验，<b>真正的授权在后端</b>。每个 <code>/api/admin/*</code> 在 Service 层调 <code>requireAdmin()</code>，普通用户直接 403 —— 已实测。这就是 ADR 里"认证与授权分离"的落地。
+  </div>
+</div>
+
+<!-- 第 8 幕 -->
+<div class="act">
+  <div class="act-head">
+    <span class="act-title">第 8 幕 · 改进后的关系模型</span>
+    <span class="tag">PPT 第四节</span>
+    <span class="tag min">约 2 分钟</span>
+  </div>
+  <p class="act-goal">交代拆分的最终形态，并解释那个"二选一"约束。</p>
+  <p><b>打开：</b><code>羽毛球社区-表关系图.html</code> —— 这张就是"改进后的关系模型"（表卡片 + 外键连线 + 基数，字段与 schema.sql 逐列一致）</p>
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>改进后的结果是：活动是头，占用是明细。但明细我<b>没有单独开一张 activity_court 表</b>，而是和"个人预约"合并进了同一张 <code>reservation</code>。</p>
+    <p>理由是——<b>"同一球场同一时段只能有一条有效占用"是一个全局不变量</b>。如果个人预约和活动占场分两张表，判冲突就要 UNION 两张表再分别加锁，竞态窗口翻倍。合并后，这个不变量只需要在一个地方守。</p>
+    <p>代价是这张表承担了两种语义。所以我用一条 CHECK 约束钉死：</p>
+  </blockquote>
+  <pre><code>CONSTRAINT chk_reservation_owner
+  CHECK ((user_id IS NULL) &lt;&gt; (activity_id IS NULL))</code></pre>
+  <p><b>强制二选一</b>：要么是个人预约（user_id 有值），要么是活动占场（activity_id 有值），不可能两者都有或都没有。</p>
+</div>
+
+<!-- 第 8 幕 -->
+<div class="act">
+  <div class="act-head">
+    <span class="act-title">第 9 幕 · 新增实现 + 报表打印</span>
+    <span class="tag">PPT 第五节</span>
+    <span class="tag min">约 3 分钟</span>
+  </div>
+  <p class="act-goal">主从表录完能打出一张纸。</p>
+
+  <table>
+    <tr><th>报表</th><th>从哪进</th><th>内容</th></tr>
+    <tr><td><b>预约凭证</b></td><td>我的预约 → 任意一行 → 「打印凭证」</td><td>凭证编号、场馆+球场、占用方、时段、时长、状态</td></tr>
+    <tr><td><b>活动报名名单</b></td><td>球局详情 → 「都有谁」右侧 → 「打印名单」</td><td>活动信息 + 人数 N/上限 + 报名人列表</td></tr>
+  </table>
+
+  <ul class="plain">
+    <li>点「打印」→ 新标签页打开 A4 单据 → 自动弹打印对话框 → 可「另存为 PDF」</li>
+  </ul>
+
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>这两个报表用的是 <code>@media print</code> 单独一套样式——屏幕上的导航栏、按钮、阴影都不会印到纸上。</p>
+    <p>权限上：凭证只有<b>本人或管理员</b>能打；报名名单含其他用户昵称，只有<b>发起人或管理员</b>能看。这两条规则在 Service 层，不是靠前端藏按钮。</p>
+  </blockquote>
+
+  <div class="okbox">
+    <b>预留的加分点：</b>凭证页的数据是查 <code>v_reservation_detail</code> 视图出来的——<code>venue_name</code>、<code>duration_hours</code>、<code>status_text</code> 这几个字段在 <code>reservation</code> 表里<b>根本不存在</b>。可以当场对比表结构和接口返回，证明视图真在供数。
+  </div>
+</div>
+
+<!-- 第 9 幕 -->
+<div class="act">
+  <div class="act-head">
+    <span class="act-title">第 10 幕 · 收尾</span>
+    <span class="tag">PPT 第六节 · 进度检查</span>
+    <span class="tag min">约 1 分钟</span>
+  </div>
+  <p class="act-goal">用"测试 + 踩坑"收尾，留下记忆点。</p>
+  <blockquote>
+    <span class="who">讲解词</span>
+    <p>项目有 <b>58 个自动化测试</b>，打的是真实 MySQL，全部通过。测试甚至会在启动时校验"测试库结构和 schema.sql 一致"，防止测试和线上漂移。</p>
+    <p>另外我把自己踩到的一个并发缺陷整理成了一份分析文档：4 个用户同时约同一时段，早期版本会全部成功。追下来是 InnoDB 在 REPEATABLE READ 下，<code>SELECT ... FOR UPDATE</code> 是当前读，但后面的 <code>COUNT(*)</code> 走的还是事务最早建立的旧快照——<b>锁是对的，读到的是旧数据</b>。修法是让冲突判断也走当前读。</p>
+  </blockquote>
+  <div class="okbox">
+    <b>这份文档（known-issues.md）不在 PPT 的五个考核点里，但它是全场最容易让老师记住的两分钟。</b>建议主动讲。
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">2</span>缺口与对策</h2>
+<p class="sub">先知道自己缺什么，比现场被问住强。</p>
+
+<table>
+  <tr><th>#</th><th>项</th><th>状态</th></tr>
+  <tr class="hi">
+    <td>1</td>
+    <td><b>管理端</b>：活动审核（通过 / 驳回）、球场新增 / 改名 / 停用 / 启用</td>
+    <td><b>✅ 已补齐</b> —— 新增 <code>/admin</code> 管理台（见第 7 幕），<b>后端零改动</b>，全部复用既有接口</td>
+  </tr>
+  <tr class="hi">
+    <td>2</td>
+    <td>场馆 / 球场的前端维护界面</td>
+    <td><b>✅ 已补齐</b> —— 同在管理台</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>多条件组合查询较弱（只有状态 + 时间范围）</td>
+    <td>⚠️ 仍在 —— 不影响主流程，但 PPT 第 5 页"进阶：万能查询"会拿不满</td>
+  </tr>
+</table>
+
+<h3>管理台是怎么补的（原方案 A，已实施）</h3>
+<p>管理台是一个独立页面 <code>frontend/src/views/Admin.vue</code>，入口在右上角头像菜单，路由带 <code>requiresAdmin</code> 守卫。<b>它没有新增任何后端接口</b> —— 复用的都是既有的 <code>/api/admin/activities/*</code> 与 <code>/api/admin/courts*</code>。</p>
+<p>字段全部按下划线取值（后端 JSON 是 SNAKE_CASE：<code>creator_nickname</code> / <code>court_ids</code> / <code>max_members</code> / <code>reject_reason</code> / <code>venue_id</code>），并已在真接口上逐一验证：新增 / 改名 / 停用 / 启用球场、待审核列表、审核通过，以及普通用户访问被 403 拒绝。</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">3</span>必答问题</h2>
+<p class="sub">老师大概率会问这几个。答案背下来，比多做十页 PPT 有用。</p>
+
+<div class="qa">
+  <p class="q"><span class="n">Q1</span>reservation 为什么把个人预约和活动占场塞进同一张表？</p>
+  <p class="a">因为"同一球场同一时段只能有一条有效占用"是<strong>全局不变量</strong>。分两张表就要 UNION 后分别加锁，竞态窗口翻倍；合并后只需守一处。代价是双语义，用 <code>chk_reservation_owner</code> 强制 user_id / activity_id 二选一。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="n">Q2</span>registration 已经有 id 主键了，为什么还要 (user_id, activity_id) 唯一约束？</p>
+  <p class="a"><code>id</code> 是<strong>代理键</strong>，给程序引用用的；<code>(user_id, activity_id)</code> 才是<strong>业务规则</strong>（一个人在同一活动只能报一次）。两者职责不同，不能互相替代。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="n">Q3</span>post_like 为什么干脆不要 id 主键？</p>
+  <p class="a">因为这张表的"身份"就是"谁赞了哪帖"，复合主键 <code>(post_id, user_id)</code> <strong>本身就是那条业务规则</strong>，再加代理键是多余的。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="n">Q4</span>为什么不给 post 加 like_count 字段？</p>
+  <p class="a">点赞数是<strong>能算出来的量</strong>，属于"导出项"。一旦落成字段，就会出现"点赞表加了行、计数字段忘了更新"的不一致。我把它放进视图 <code>v_post_with_stats</code> 实时 COUNT。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="n">Q5</span>活动占场为什么不算个人预约？</p>
+  <p class="a">两者的"归属"不同：个人预约的占用方是用户，活动占场的占用方是活动。是活动占场时 <code>user_id</code> 必须为 NULL、<code>activity_id</code> 有值——由 CHECK 约束强制。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="n">Q6</span>取消预约为什么不是物理删除？</p>
+  <p class="a">因为要留痕，且"取消后释放时段"是靠 <code>status=2</code> 让冲突判断忽略它。物理删掉就查不到历史了。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="n">Q7</span>一个人能不能重复报同一个活动？</p>
+  <p class="a">不能。数据库层靠 <code>uk_registration_user_activity</code> 唯一约束兜底，应用层在报名前先查一次并给出友好提示。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="n">Q8</span>并发情况下怎么保证不超卖？</p>
+  <p class="a">报名和预约都走事务 + <code>SELECT ... FOR UPDATE</code>。这里有份踩坑文档（known-issues.md）——我第一版就是栽在 RR 隔离级别的一致性读快照上。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">4</span>应急方案</h2>
+<table>
+  <tr><th>情况</th><th>处理</th></tr>
+  <tr><td>MySQL 没起来</td><td><code>net start MySQL</code>（本机服务名 MySQL）</td></tr>
+  <tr><td>8080 被占用</td><td>换端口启动：<code>mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081</code>，同时改前端 <code>vite.config.js</code> 的 proxy 目标</td></tr>
+  <tr class="hi"><td><b>数据全过期（今天没有球局）</b></td><td><b>重跑 <code>sql/demo-refresh.sql</code></b></td></tr>
+  <tr><td>前端白屏</td><td>看浏览器控制台；多半是后端没起来，<code>/api</code> 代理失败</td></tr>
+  <tr><td>打印页空白 / 报错</td><td>确认已执行过 <code>sql/views.sql</code>（凭证查的是视图）</td></tr>
+</table>
+
+<div class="danger">
+  <b>演示前至少完整走两遍。</b>第二遍的目的不是熟悉流程，而是发现"只有跑过一遍才会出现"的问题 —— 比如数据被第一遍的操作改掉了（取消的预约、加入的球局）。<b>保险做法：演示当天早上刷新一次数据，然后只走一遍完整流程确认无误。</b>
+</div>
+
+<footer>
+  羽毛球社区管理系统 · 答辩演示手册　|　配套文件 —— 图表在 <code>docs/diagrams/</code>（ER 图 / 关系模型明细 / 表关系图）；SQL 在 <code>sql/</code>（schema / views / demo-refresh）
+</footer>
+
+</div>
+</body>
+</html>

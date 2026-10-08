@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>reservation 表定义（schema.sql）</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;background:#fff;color:#1A1A18;
+    font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+  .wrap{padding:34px 30px;}
+  .card{border:1px solid #D8D6CD;border-radius:12px;overflow:hidden;background:#fff;}
+  .bar{background:#F4F3EE;border-bottom:1px solid #E0DED6;padding:10px 18px;
+    display:flex;align-items:center;gap:9px;font-size:13px;color:#4A4A45;}
+  .dot{width:9px;height:9px;border-radius:50%;background:#D8D6CD;}
+  .obj{font-family:ui-monospace,Consolas,monospace;font-weight:600;font-size:14px;color:#1A1A18;}
+  .obj em{font-style:normal;color:#8A8A82;font-weight:400;font-size:12.5px;margin-left:8px;}
+  .code{background:#242522;color:#E8E6E0;padding:18px 0;
+    font-family:ui-monospace,Consolas,monospace;font-size:13.5px;line-height:1.7;}
+  .ln{padding:1px 20px;white-space:pre;}
+  .ln.hl{background:rgba(184,230,46,.14);border-left:3px solid #B8E62E;padding-left:17px;}
+  .kw{color:#9CCF4F;font-weight:600;}
+  .ty{color:#7FB4D6;}
+  .cm{color:#7C7C74;}
+  .st{color:#E8C07A;}
+  .tip{margin:16px 2px 0;font-size:13px;color:#4A4A45;line-height:1.8;}
+  .tip b{background:#EFFAD0;padding:1px 6px;border-radius:4px;color:#2F3F10;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="obj">schema.sql<em>reservation 表 · 归属不变量</em></span>
+    </div>
+
+    <div class="code">
+<div class="ln"><span class="kw">CREATE TABLE</span> reservation (</div>
+<div class="ln">  id          <span class="ty">BIGINT</span>   <span class="kw">NOT NULL AUTO_INCREMENT</span> <span class="cm">COMMENT</span> <span class="st">'主键'</span>,</div>
+<div class="ln">  court_id    <span class="ty">BIGINT</span>   <span class="kw">NOT NULL</span> <span class="cm">COMMENT</span> <span class="st">'被占用的球场'</span>,</div>
+<div class="ln">  user_id     <span class="ty">BIGINT</span>   <span class="kw">NULL</span> <span class="cm">COMMENT</span> <span class="st">'个人预约有值；活动占场必须为 NULL'</span>,</div>
+<div class="ln">  activity_id <span class="ty">BIGINT</span>   <span class="kw">NULL</span> <span class="cm">COMMENT</span> <span class="st">'活动占场有值；个人预约必须为 NULL'</span>,</div>
+<div class="ln">  start_time  <span class="ty">DATETIME</span> <span class="kw">NOT NULL</span> <span class="cm">COMMENT</span> <span class="st">'占用开始（整点）'</span>,</div>
+<div class="ln">  end_time    <span class="ty">DATETIME</span> <span class="kw">NOT NULL</span> <span class="cm">COMMENT</span> <span class="st">'占用结束（整点）'</span>,</div>
+<div class="ln">  status      <span class="ty">TINYINT</span>  <span class="kw">NOT NULL DEFAULT</span> 1 <span class="cm">COMMENT</span> <span class="st">'1=有效，2=已取消'</span>,</div>
+<div class="ln">  cancel_time <span class="ty">DATETIME</span> <span class="kw">NULL</span> <span class="cm">COMMENT</span> <span class="st">'取消时刻'</span>,</div>
+<div class="ln">  create_time <span class="ty">DATETIME</span> <span class="kw">NOT NULL DEFAULT CURRENT_TIMESTAMP</span> <span class="cm">COMMENT</span> <span class="st">'创建时间'</span>,</div>
+<div class="ln">  update_time <span class="ty">DATETIME</span> <span class="kw">NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP</span>,</div>
+<div class="ln">  <span class="kw">PRIMARY KEY</span> (id),</div>
+<div class="ln">  <span class="kw">KEY</span> idx_reservation_court_time (court_id, start_time, end_time),</div>
+<div class="ln">  <span class="kw">KEY</span> idx_reservation_user_time (user_id, start_time),</div>
+<div class="ln">  <span class="kw">KEY</span> idx_reservation_activity (activity_id),</div>
+<div class="ln hl">  <span class="kw">CONSTRAINT</span> fk_reservation_court    <span class="kw">FOREIGN KEY</span> (court_id)    <span class="kw">REFERENCES</span> court (id),</div>
+<div class="ln hl">  <span class="kw">CONSTRAINT</span> fk_reservation_user     <span class="kw">FOREIGN KEY</span> (user_id)     <span class="kw">REFERENCES</span> user (id),</div>
+<div class="ln hl">  <span class="kw">CONSTRAINT</span> fk_reservation_activity <span class="kw">FOREIGN KEY</span> (activity_id) <span class="kw">REFERENCES</span> activity (id),</div>
+<div class="ln">  <span class="kw">CONSTRAINT</span> chk_reservation_status <span class="kw">CHECK</span> (status <span class="kw">IN</span> (1, 2)),</div>
+<div class="ln">  <span class="kw">CONSTRAINT</span> chk_reservation_time   <span class="kw">CHECK</span> (end_time &gt; start_time),</div>
+<div class="ln hl">  <span class="cm">-- 归属不变量：user_id 与 activity_id 至多一者非空</span></div>
+<div class="ln hl">  <span class="kw">CONSTRAINT</span> chk_reservation_owner  <span class="kw">CHECK</span> ((user_id <span class="kw">IS NULL</span>) &lt;&gt; (activity_id <span class="kw">IS NULL</span>))</div>
+<div class="ln">) <span class="kw">ENGINE</span> = InnoDB <span class="cm">COMMENT</span> = <span class="st">'场地占用账本'</span>;</div>
+    </div>
+  </div>
+
+  <p class="tip">
+    绿色标出的最后一条：<b>两种归属二选一</b> —— 要么是个人预约（user_id 有值），要么是活动占场（activity_id 有值），
+    不可能都有或都没有。<br>
+    上面三条是它引用到的外键。
+  </p>
+
+</div>
+</body>
+</html>

@@ -440,9 +440,10 @@ data = {
 
 | 参数 | 必填 | 含义与约束 |
 |---|---|---|
+| keyword | 否 | 活动标题关键词，前后空格会去掉，最多 100 字符；可与其他条件组合 |
 | status | 否 | 1=已发布，4=已结束；缺省返回两者（时间倒序）。**非公开状态（0/2/3）对非管理员不可查询** |
 | start_from | 否 | 活动开始时间下限（如只列出未来活动） |
-| start_to | 否 | 活动开始时间上限 |
+| start_to | 否 | 活动开始时间上限；不能早于 `start_from` |
 | page / page_size | 否 | 分页 |
 
 **Response**：列表元素 `{id, title, creator_id, creator_nickname, start_time, end_time, max_members, joined_count, status, court_ids}`。`joined_count` 为 `status=1` 的报名行数，实时计算。
@@ -456,7 +457,7 @@ data = {
 所以"一次请求取一个较长时间窗"拿到的是窗口内**最晚的**那批数据 —— 想按天取数必须**按天分查**，
 否则会静默丢掉窗口靠前（更近）的球局。首页的 7 天日期条就是按此实现的（每天一个请求，用返回的 `total` 作为当天场次数）。
 
-**Failure**：`FORBIDDEN`（普通用户请求了非公开 status）。
+**Failure**：`FORBIDDEN`（普通用户请求了非公开 status）、`PARAM_INVALID`（关键词超过 100 字符、开始时间下限晚于上限或 status 非法）。
 
 ### 5.3 查询活动详情
 

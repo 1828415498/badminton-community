@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>从联系表到虚实体 · 拆与不拆对比</title>
+<style>
+  :root{
+    --ink:#1A1A18; --ink-2:#4A4A45; --ink-3:#8A8A82;
+    --line:#E0DED6; --bg:#FFFFFF; --bg-2:#FAFAF7; --bg-3:#F4F3EE;
+    --bad:#B4551A; --bad-bg:#FDF3E7; --bad-dup:#F6DFC4; --bad-line:#EBCFB2;
+    --good:#2F6B3A; --good-bg:#EDF6EE; --good-line:#C9E0CD;
+    --brand-soft:#EFFAD0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1240px;margin:0 auto;padding:38px 34px 56px;}
+
+  header.doc{border-bottom:2px solid var(--ink);padding-bottom:15px;margin-bottom:26px;}
+  .eyebrow{font-size:12px;letter-spacing:.14em;color:var(--ink-3);margin-bottom:8px;}
+  h1{font-size:25px;margin:0 0 9px;letter-spacing:-.01em;}
+  .lede{color:var(--ink-2);font-size:14px;margin:0;max-width:800px;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  @media (max-width:900px){.grid{grid-template-columns:1fr;}}
+
+  .panel{border:1px solid var(--line);border-radius:12px;padding:18px 20px 20px;break-inside:avoid;}
+  .panel.bad{border-left:5px solid var(--bad);background:var(--bad-bg);border-color:var(--bad-line);}
+  .panel.good{border-left:5px solid var(--good);background:var(--good-bg);border-color:var(--good-line);}
+  .panel h2{font-size:16px;margin:0 0 4px;letter-spacing:-.01em;}
+  .panel.bad h2{color:var(--bad);}
+  .panel.good h2{color:var(--good);}
+  .panel .sub{font-size:12.5px;color:var(--ink-3);margin:0 0 14px;}
+
+  .tbl-name{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;font-weight:600;
+    color:var(--ink-2);margin:14px 0 5px;}
+  .tbl-name span{font-family:inherit;font-weight:400;color:var(--ink-3);font-size:11.5px;
+    margin-left:6px;}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;
+    background:#fff;border-radius:7px;overflow:hidden;}
+  th,td{border:1px solid #E4E2DA;padding:6px 8px;text-align:left;white-space:nowrap;}
+  th{background:#F4F3EE;font-weight:600;font-size:11.5px;color:var(--ink-2);}
+  td.k{color:var(--ink-3);}
+  td.dup{background:var(--bad-dup);}
+  td.once{background:#DCEEDF;}
+  td.fk{color:#33638C;font-weight:600;}
+
+  .mark{list-style:none;margin:14px 0 0;padding:0;}
+  .mark li{font-size:13px;margin:5px 0;padding-left:22px;position:relative;}
+  .mark li::before{position:absolute;left:0;top:0;font-weight:700;}
+  .panel.bad .mark li{color:#6B3A10;}
+  .panel.bad .mark li::before{content:"×";color:var(--bad);}
+  .panel.good .mark li{color:#245029;}
+  .panel.good .mark li::before{content:"✓";color:var(--good);}
+
+  .concl{margin:24px 0 0;background:var(--brand-soft);border:1px solid #D6EC9A;
+    border-radius:10px;padding:15px 20px;font-size:15px;font-weight:600;color:#3A4A18;
+    text-align:center;letter-spacing:-.01em;}
+  .concl code{background:#fff;padding:2px 8px;border-radius:5px;
+    font-family:ui-monospace,Consolas,monospace;font-size:14px;}
+
+  .saybox{margin:20px 0 0;background:var(--bg-3);border-left:3px solid var(--line);
+    border-radius:0 9px 9px 0;padding:14px 18px;}
+  .saybox h3{margin:0 0 7px;font-size:12px;letter-spacing:.06em;color:var(--ink-3);font-weight:600;}
+  .saybox p{margin:0;font-size:13.5px;color:var(--ink);line-height:1.8;}
+  .saybox p + p{margin-top:8px;}
+
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);
+    color:var(--ink-3);font-size:12.5px;}
+
+  @media print{
+    .wrap{max-width:none;padding:0 10mm;}
+    .panel{break-inside:avoid;}
+    @page{size:A3 landscape;margin:10mm;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <div class="eyebrow">第四节 · 引进虚实体</div>
+  <h1>同一个需求，两种建表方式</h1>
+  <p class="lede">
+    场景：一场活动要占 <b>3 块球场</b>。左边是"照多对多联系直录"，右边是把活动提升为虚实体（主从表）。
+  </p>
+</header>
+
+<div class="grid">
+
+  <!-- ============ 不拆 ============ -->
+  <section class="panel bad">
+    <h2>✗ 不拆 —— 活动占场当普通联系表，一行一块场</h2>
+    <p class="sub">活动本身没有归属的表，属性只能跟着每一行重复。</p>
+
+    <div class="tbl-name">activity_court<span>一张宽表</span></div>
+    <table>
+      <tr>
+        <th>活动标题</th><th>开始时间</th><th>人数上限</th><th>审核状态</th><th>球场</th>
+      </tr>
+      <tr>
+        <td class="dup">周三双打</td><td class="dup">10-08 19:00</td><td class="dup">6</td><td class="dup">已发布</td><td>1 号场</td>
+      </tr>
+      <tr>
+        <td class="dup">周三双打</td><td class="dup">10-08 19:00</td><td class="dup">6</td><td class="dup">已发布</td><td>2 号场</td>
+      </tr>
+      <tr>
+        <td class="dup">周三双打</td><td class="dup">10-08 19:00</td><td class="dup">6</td><td class="dup">已发布</td><td>3 号场</td>
+      </tr>
+    </table>
+
+    <ul class="mark">
+      <li><b>活动的信息重复了 3 遍</b>（琥珀色那四列）</li>
+      <li>改一次开始时间 → 要改 <b>3 行</b>；漏改一行，数据就自相矛盾</li>
+      <li>人数上限、审核状态同理 —— 一处改动要同步 N 行</li>
+      <li>「活动」这个概念在库里<b>没有主键</b>，查一场活动只能按标题模糊匹配</li>
+    </ul>
+  </section>
+
+  <!-- ============ 拆 ============ -->
+  <section class="panel good">
+    <h2>✓ 拆 —— 活动当头表，占场降为明细</h2>
+    <p class="sub">活动自己成为一张表（虚实体），明细只记录"占了哪几块场"。</p>
+
+    <div class="tbl-name">activity<span>头表 · 活动只存一份</span></div>
+    <table>
+      <tr>
+        <th>id</th><th>title</th><th>start_time</th><th>max_members</th><th>status</th>
+      </tr>
+      <tr>
+        <td class="k">1</td><td class="once">周三双打</td><td class="once">10-08 19:00</td><td class="once">6</td><td class="once">已发布</td>
+      </tr>
+    </table>
+
+    <div class="tbl-name">reservation<span>明细 · 一行一块场，靠 activity_id 归属</span></div>
+    <table>
+      <tr>
+        <th>id</th><th>activity_id</th><th>court_id</th><th>start_time</th><th>end_time</th>
+      </tr>
+      <tr>
+        <td class="k">101</td><td class="fk">1</td><td>1</td><td>10-08 19:00</td><td>10-08 21:00</td>
+      </tr>
+      <tr>
+        <td class="k">102</td><td class="fk">1</td><td>2</td><td>10-08 19:00</td><td>10-08 21:00</td>
+      </tr>
+      <tr>
+        <td class="k">103</td><td class="fk">1</td><td>3</td><td>10-08 19:00</td><td>10-08 21:00</td>
+      </tr>
+    </table>
+
+    <ul class="mark">
+      <li><b>活动信息只存 1 次</b>（绿色那一行）</li>
+      <li>改一次开始时间 → <b>只改 1 行</b>，明细自动跟着走</li>
+      <li>活动有了自己的主键，能按 id 精确查、能被外键引用</li>
+      <li>占几块场就写几行明细 —— <b>行数不固定</b>，但都不重复活动信息</li>
+    </ul>
+  </section>
+
+</div>
+
+<div class="concl">
+  一次创建 = <code>1 条 activity</code> + <code>N 条 reservation</code>，包在同一个事务里
+</div>
+
+<div class="saybox">
+  <h3>这一页怎么讲（口播）</h3>
+  <p>
+    这里是我整个设计的转折点。一个活动经常要占多块场。<b>如果我把"活动占场"也照多对多联系表来直录</b>，
+    一次占三块场就要写三行 —— 你看活动标题、开始时间、人数上限、审核状态，这四列重复了三遍。
+    改一次开始时间要改三行，漏一行数据就自相矛盾了。
+  </p>
+  <p>
+    <b>所以我把活动提升成一个虚实体。</b>活动自己成为一张表，只存一份；"占哪几块场"降为它的明细。
+    一次创建就是一条活动加 N 条占用，包在一个事务里提交。
+  </p>
+  <p style="color:#6B3A10;margin-top:10px">
+    ⚠ 如果老师追问"明细为什么不单独开一张 activity_court 表"，见 P8 下一页的口播词（合并进 reservation 的理由）。
+  </p>
+</div>
+
+<footer>
+  羽毛球社区管理系统 · 第四节配图　|　数据与字段均来自 <code>sql/schema.sql</code>　|　截图后可直接插入 PPT
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>羽毛球社区管理系统 · 关系模型明细</title>
+<style>
+  :root{
+    --ink:#2C2C2A; --ink2:#444441; --ink3:#5F5E5A; --line:#D3D1C7; --line2:#EDEBE4;
+    --blue:#E6F1FB; --blueL:#185FA5; --blueD:#0C447C;
+    --teal:#E1F5EE; --tealL:#0F6E56; --tealD:#085041;
+    --amber:#FAEEDA; --amberL:#BA7517; --amberD:#854F0B;
+    --soft:#F7F6F2; --bg:#FFFFFF;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:30px 26px 56px;background:var(--bg);color:var(--ink);
+    font-family:"Segoe UI","Microsoft YaHei",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  h1{font-size:22px;font-weight:600;margin:0 0 6px}
+  .sub{font-size:13px;color:var(--ink3);margin:0 0 22px}
+  h2{font-size:15px;font-weight:600;margin:32px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:16px;align-items:start}
+
+  .card{border:1px solid var(--line);border-radius:12px;background:#FCFCFB;overflow:hidden}
+  .hd{display:flex;align-items:baseline;gap:10px;padding:12px 16px 10px;border-bottom:1px solid var(--line)}
+  .nm{font-family:Consolas,"Cascadia Mono",monospace;font-size:15px;font-weight:600;color:var(--ink)}
+  .cn{font-size:13px;color:var(--ink3)}
+  .badge{margin-left:auto;font-size:11.5px;padding:2.5px 9px;border-radius:20px;white-space:nowrap}
+  .b-ent{background:var(--blue);color:var(--blueD)}
+  .b-rel{background:var(--teal);color:var(--tealD)}
+  .b-core{background:var(--amber);color:var(--amberD)}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+  th,td{border-bottom:1px solid var(--line2);padding:5.5px 16px;text-align:left;vertical-align:top}
+  th{font-size:12px;font-weight:600;color:var(--ink3);background:var(--soft)}
+  td.f{font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px;color:var(--ink);width:30%}
+  td.t{font-family:Consolas,"Cascadia Mono",monospace;font-size:12px;color:var(--ink3);width:26%}
+  td.k{width:15%;white-space:nowrap}
+  td.d{font-size:12.5px;color:var(--ink2)}
+  .pk{color:var(--amberD);font-weight:600}
+  .fk{color:var(--blueL);font-weight:600}
+  .uk{color:var(--tealD);font-weight:600}
+  .nn{color:#A32D2D}
+
+  .ft{padding:10px 16px 13px;font-size:12.5px;line-height:1.85;color:var(--ink2);background:#FCFCFB}
+  .ft .row{display:flex;gap:8px}
+  .ft .lbl{flex:0 0 62px;color:var(--ink3)}
+  .ft code{font-family:Consolas,"Cascadia Mono",monospace;font-size:12px;color:var(--ink2);background:#F2F0EA;padding:1px 5px;border-radius:4px}
+
+  .tree{font-family:Consolas,"Cascadia Mono",monospace;font-size:13px;line-height:2;color:var(--ink2);
+    background:#FCFCFB;border:1px solid var(--line);border-radius:10px;padding:15px 20px}
+  .tree b{color:var(--ink)}
+  .tree i{color:var(--blueL);font-style:normal}
+  .tree em{color:var(--tealD);font-style:normal}
+
+  .note{font-size:13px;line-height:1.9;color:var(--ink2);background:#FCFCFB;border:1px solid var(--line);
+    border-left:3px solid var(--tealL);border-radius:8px;padding:13px 17px;margin-top:14px}
+  .note b{color:var(--ink)}
+  @media print{body{padding:0}.grid{grid-template-columns:1fr 1fr}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<h1>羽毛球社区管理系统 · 关系模型明细</h1>
+<p class="sub">9 张表逐张展开：字段 / 类型 / 可空 / 键 / 说明，以及每张表的上级（它引用谁）与下级（谁引用它）。配合 ER 总图使用。</p>
+
+<h2>依赖层级：谁在最上面，谁在最下面</h2>
+<div class="tree">
+  <b>user</b>　<span style="color:#5F5E5A">（根表，不依赖任何表）</span><br>
+  ├── <b>venue</b>　<span style="color:#5F5E5A">（根表，不依赖任何表）</span><br>
+  │　　└── <b>court</b>　<i>venue_id</i> → venue<br>
+  │　　　　　　└── <b>reservation</b>　<i>court_id</i> → court<br>
+  ├── <b>activity</b>　<i>creator_id</i> → user、<i>reviewer_id</i> → user<br>
+  │　　├── <b>registration</b>　<i>activity_id</i> → activity<br>
+  │　　└── <b>reservation</b>　<i>activity_id</i> → activity<br>
+  ├── <b>post</b>　<i>user_id</i> → user<br>
+  │　　├── <b>comment</b>　<i>post_id</i> → post（级联删除）<br>
+  │　　└── <b>post_like</b>　<i>post_id</i> → post（级联删除）<br>
+  └── <b>reservation</b>　<i>user_id</i> → user　<span style="color:#5F5E5A">（个人预约行；活动占场行此列为 NULL）</span><br>
+  <b>comment</b>　<i>user_id</i> → user<br>
+  <b>post_like</b>　<i>user_id</i> → user
+</div>
+
+<h2>逐表明细</h2>
+<div class="grid">
+
+  <!-- ============ user ============ -->
+  <div class="card">
+    <div class="hd"><span class="nm">user</span><span class="cn">用户</span><span class="badge b-ent">实体　→ ER 图中的矩形</span></div>
+    <table>
+      <tr><th>字段</th><th>类型</th><th>键</th><th>说明</th></tr>
+      <tr><td class="f">id</td><td class="t">BIGINT</td><td class="k"><span class="pk">PK</span></td><td class="d">自增主键</td></tr>
+      <tr><td class="f">username</td><td class="t">VARCHAR(64)</td><td class="k"><span class="uk">UK</span> <span class="nn">NN</span></td><td class="d">登录名，全库唯一</td></tr>
+      <tr><td class="f">password_hash</td><td class="t">VARCHAR(255)</td><td class="k"><span class="nn">NN</span></td><td class="d">BCrypt 哈希，永不存明文</td></tr>
+      <tr><td class="f">nickname</td><td class="t">VARCHAR(64)</td><td class="k"><span class="nn">NN</span></td><td class="d">展示昵称</td></tr>
+      <tr><td class="f">avatar_url</td><td class="t">VARCHAR(255)</td><td class="k">—</td><td class="d">头像路径，可空</td></tr>
+      <tr><td class="f">role</td><td class="t">TINYINT</td><td class="k"><span class="nn">NN</span></td><td class="d">0 = 普通用户，1 = 管理员</td></tr>
+      <tr><td class="f">create_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">默认当前时间</td></tr>
+      <tr><td class="f">update_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">更新时自动刷新</td></tr>
+    </table>
+    <div class="ft">
+      <div class="row"><span class="lbl">上级</span><span>无（根表）</span></div>
+      <div class="row"><span class="lbl">下级</span><span><code>activity.creator_id</code>、<code>activity.reviewer_id</code>、<code>reservation.user_id</code>、<code>registration.user_id</code>、<code>post.user_id</code>、<code>comment.user_id</code>、<code>post_like.user_id</code></span></div>
+      <div class="row"><span class="lbl">约束</span><span><code>uk_user_username</code>、<code>chk_user_role CHECK (role IN (0,1))</code></span></div>
+    </div>
+  </div>
+
+  <!-- ============ venue ============ -->
+  <div class="card">
+    <div class="hd"><span class="nm">venue</span><span class="cn">场馆</span><span class="badge b-ent">实体　→ ER 图中的矩形</span></div>
+    <table>
+      <tr><th>字段</th><th>类型</th><th>键</th><th>说明</th></tr>
+      <tr><td class="f">id</td><td class="t">BIGINT</td><td class="k"><span class="pk">PK</span></td><td class="d">自增主键</td></tr>
+      <tr><td class="f">name</td><td class="t">VARCHAR(64)</td><td class="k"><span class="nn">NN</span></td><td class="d">场馆名称</td></tr>
+      <tr><td class="f">address</td><td class="t">VARCHAR(255)</td><td class="k"><span class="nn">NN</span></td><td class="d">地址</td></tr>
+      <tr><td class="f">create_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">创建时间</td></tr>
+      <tr><td class="f">update_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">更新时间</td></tr>
+    </table>
+    <div class="ft">
+      <div class="row"><span class="lbl">上级</span><span>无（根表）</span></div>
+      <div class="row"><span class="lbl">下级</span><span><code>court.venue_id</code></span></div>
+      <div class="row"><span class="lbl">约束</span><span>无额外约束。V1 只有一行数据（单场馆）</span></div>
+    </div>
+  </div>
+
+  <!-- ============ court ============ -->
+  <div class="card">
+    <div class="hd"><span class="nm">court</span><span class="cn">球场</span><span class="badge b-ent">实体　→ ER 图中的矩形</span></div>
+    <table>
+      <tr><th>字段</th><th>类型</th><th>键</th><th>说明</th></tr>
+      <tr><td class="f">id</td><td class="t">BIGINT</td><td class="k"><span class="pk">PK</span></td><td class="d">自增主键</td></tr>
+      <tr><td class="f">venue_id</td><td class="t">BIGINT</td><td class="k"><span class="fk">FK</span> <span class="nn">NN</span></td><td class="d">所属场馆 → venue(id)</td></tr>
+      <tr><td class="f">name</td><td class="t">VARCHAR(32)</td><td class="k"><span class="nn">NN</span></td><td class="d">球场名，如「1 号场」</td></tr>
+      <tr><td class="f">status</td><td class="t">TINYINT</td><td class="k"><span class="nn">NN</span></td><td class="d">1 = 可预约，2 = 不可预约</td></tr>
+      <tr><td class="f">create_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">创建时间</td></tr>
+      <tr><td class="f">update_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">更新时间</td></tr>
+    </table>
+    <div class="ft">
+      <div class="row"><span class="lbl">上级</span><span><code>venue_id</code> → <code>venue(id)</code></span></div>
+      <div class="row"><span class="lbl">下级</span><span><code>reservation.court_id</code></span></div>
+      <div class="row"><span class="lbl">约束</span><span><code>uk_court_venue_name (venue_id, name)</code> 同一场馆内球场名不重复；<code>chk_court_status CHECK (status IN (1,2))</code>；索引 <code>idx_court_venue_status</code></span></div>
+    </div>
+  </div>
+
+  <!-- ============ activity ============ -->
+  <div class="card">
+    <div class="hd"><span class="nm">activity</span><span class="cn">活动</span><span class="badge b-ent">实体　→ ER 图中的矩形</span></div>
+    <table>
+      <tr><th>字段</th><th>类型</th><th>键</th><th>说明</th></tr>
+      <tr><td class="f">id</td><td class="t">BIGINT</td><td class="k"><span class="pk">PK</span></td><td class="d">自增主键</td></tr>
+      <tr><td class="f">creator_id</td><td class="t">BIGINT</td><td class="k"><span class="fk">FK</span> <span class="nn">NN</span></td><td class="d">创建者（组织者）→ user(id)</td></tr>
+      <tr><td class="f">title</td><td class="t">VARCHAR(100)</td><td class="k"><span class="nn">NN</span></td><td class="d">活动标题</td></tr>
+      <tr><td class="f">description</td><td class="t">VARCHAR(2000)</td><td class="k">—</td><td class="d">活动描述</td></tr>
+      <tr><td class="f">start_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">开始时间（整点）</td></tr>
+      <tr><td class="f">end_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">结束时间（整点，与 start 同一天）</td></tr>
+      <tr><td class="f">max_members</td><td class="t">INT</td><td class="k"><span class="nn">NN</span></td><td class="d">报名人数上限（≥1，创建者自动占 1 名）</td></tr>
+      <tr><td class="f">status</td><td class="t">TINYINT</td><td class="k"><span class="nn">NN</span></td><td class="d">0 待审核 / 1 已发布 / 2 已驳回 / 3 已取消 / 4 已结束</td></tr>
+      <tr><td class="f">reviewer_id</td><td class="t">BIGINT</td><td class="k"><span class="fk">FK</span></td><td class="d">审核人 → user(id)，未审核时为空</td></tr>
+      <tr><td class="f">review_time</td><td class="t">DATETIME</td><td class="k">—</td><td class="d">审核时间</td></tr>
+      <tr><td class="f">reject_reason</td><td class="t">VARCHAR(255)</td><td class="k">—</td><td class="d">驳回原因</td></tr>
+      <tr><td class="f">create_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">创建时间</td></tr>
+      <tr><td class="f">update_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">更新时间</td></tr>
+    </table>
+    <div class="ft">
+      <div class="row"><span class="lbl">上级</span><span><code>creator_id</code> → <code>user(id)</code>　<code>reviewer_id</code> → <code>user(id)</code>（两个外键都指向 user）</span></div>
+      <div class="row"><span class="lbl">下级</span><span><code>registration.activity_id</code>　<code>reservation.activity_id</code></span></div>
+      <div class="row"><span class="lbl">约束</span><span><code>chk_activity_status CHECK (status IN (0,1,2,3,4))</code>；<code>chk_activity_members CHECK (max_members &gt;= 1)</code>；<code>chk_activity_time CHECK (end_time &gt; start_time)</code>；索引 <code>idx_activity_status_start</code> / <code>idx_activity_creator</code> / <code>idx_activity_reviewer</code></span></div>
+    </div>
+  </div>
+
+  <!-- ============ reservation ============ -->
+  <div class="card">
+    <div class="hd"><span class="nm">reservation</span><span class="cn">场地占用账本</span><span class="badge b-core">预约 + 占场两个 M:N 合并落成的表</span></div>
+    <table>
+      <tr><th>字段</th><th>类型</th><th>键</th><th>说明</th></tr>
+      <tr><td class="f">id</td><td class="t">BIGINT</td><td class="k"><span class="pk">PK</span></td><td class="d">自增主键</td></tr>
+      <tr><td class="f">court_id</td><td class="t">BIGINT</td><td class="k"><span class="fk">FK</span> <span class="nn">NN</span></td><td class="d">被占用的球场 → court(id)</td></tr>
+      <tr><td class="f">user_id</td><td class="t">BIGINT</td><td class="k"><span class="fk">FK</span></td><td class="d"><b>个人预约</b>有值；活动占场行必须为 NULL</td></tr>
+      <tr><td class="f">activity_id</td><td class="t">BIGINT</td><td class="k"><span class="fk">FK</span></td><td class="d"><b>活动占场</b>有值；个人预约行必须为 NULL</td></tr>
+      <tr><td class="f">start_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">占用开始（整点）</td></tr>
+      <tr><td class="f">end_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">占用结束（整点）</td></tr>
+      <tr><td class="f">status</td><td class="t">TINYINT</td><td class="k"><span class="nn">NN</span></td><td class="d">1 = 有效，2 = 已取消</td></tr>
+      <tr><td class="f">cancel_time</td><td class="t">DATETIME</td><td class="k">—</td><td class="d">取消时刻</td></tr>
+      <tr><td class="f">create_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">预约 / 占场时间</td></tr>
+      <tr><td class="f">update_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">最后一次变更时间</td></tr>
+    </table>
+    <div class="ft">
+      <div class="row"><span class="lbl">上级</span><span><code>court_id</code> → <code>court(id)</code>　<code>user_id</code> → <code>user(id)</code>　<code>activity_id</code> → <code>activity(id)</code></span></div>
+      <div class="row"><span class="lbl">下级</span><span>无（最底层的业务表）</span></div>
+      <div class="row"><span class="lbl">约束</span><span><code>chk_reservation_owner CHECK ((user_id IS NULL) &lt;&gt; (activity_id IS NULL))</code>　←　<b>二选一，这张表的灵魂</b><br><code>chk_reservation_status</code>、<code>chk_reservation_time (end_time &gt; start_time)</code>；索引 <code>idx_reservation_court_time</code> / <code>idx_reservation_user_time</code> / <code>idx_reservation_activity</code></span></div>
+    </div>
+  </div>
+
+  <!-- ============ registration ============ -->
+  <div class="card">
+    <div class="hd"><span class="nm">registration</span><span class="cn">活动报名</span><span class="badge b-rel">「报名」M:N 联系落成的表</span></div>
+    <table>
+      <tr><th>字段</th><th>类型</th><th>键</th><th>说明</th></tr>
+      <tr><td class="f">id</td><td class="t">BIGINT</td><td class="k"><span class="pk">PK</span></td><td class="d">自增主键（代理键）</td></tr>
+      <tr><td class="f">user_id</td><td class="t">BIGINT</td><td class="k"><span class="fk">FK</span> <span class="nn">NN</span></td><td class="d">报名用户 → user(id)</td></tr>
+      <tr><td class="f">activity_id</td><td class="t">BIGINT</td><td class="k"><span class="fk">FK</span> <span class="nn">NN</span></td><td class="d">报名活动 → activity(id)</td></tr>
+      <tr><td class="f">status</td><td class="t">TINYINT</td><td class="k"><span class="nn">NN</span></td><td class="d">1 = 已报名，2 = 已取消</td></tr>
+      <tr><td class="f">create_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">报名时间</td></tr>
+      <tr><td class="f">update_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">更新时间</td></tr>
+    </table>
+    <div class="ft">
+      <div class="row"><span class="lbl">上级</span><span><code>user_id</code> → <code>user(id)</code>　<code>activity_id</code> → <code>activity(id)</code></span></div>
+      <div class="row"><span class="lbl">下级</span><span>无</span></div>
+      <div class="row"><span class="lbl">约束</span><span><code>uk_registration_user_activity (user_id, activity_id)</code> 一人一活动只能一条；<code>chk_registration_status</code>；索引 <code>idx_registration_activity_status</code></span></div>
+    </div>
+  </div>
+
+  <!-- ============ post ============ -->
+  <div class="card">
+    <div class="hd"><span class="nm">post</span><span class="cn">帖子</span><span class="badge b-ent">实体　→ ER 图中的矩形</span></div>
+    <table>
+      <tr><th>字段</th><th>类型</th><th>键</th><th>说明</th></tr>
+      <tr><td class="f">id</td><td class="t">BIGINT</td><td class="k"><span class="pk">PK</span></td><td class="d">自增主键</td></tr>
+      <tr><td class="f">user_id</td><td class="t">BIGINT</td><td class="k"><span class="fk">FK</span> <span class="nn">NN</span></td><td class="d">作者 → user(id)</td></tr>
+      <tr><td class="f">title</td><td class="t">VARCHAR(200)</td><td class="k"><span class="nn">NN</span></td><td class="d">标题</td></tr>
+      <tr><td class="f">content</td><td class="t">TEXT</td><td class="k"><span class="nn">NN</span></td><td class="d">正文</td></tr>
+      <tr><td class="f">create_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">发布时间</td></tr>
+      <tr><td class="f">update_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">更新时间</td></tr>
+    </table>
+    <div class="ft">
+      <div class="row"><span class="lbl">上级</span><span><code>user_id</code> → <code>user(id)</code></span></div>
+      <div class="row"><span class="lbl">下级</span><span><code>comment.post_id</code>（级联删除）　<code>post_like.post_id</code>（级联删除）</span></div>
+      <div class="row"><span class="lbl">约束</span><span>索引 <code>idx_post_create_time</code> / <code>idx_post_user</code>。<b>注意：本表没有 status 字段，也没有 like_count 字段</b> —— 点赞数实时 COUNT，帖子下架用物理删除</span></div>
+    </div>
+  </div>
+
+  <!-- ============ comment ============ -->
+  <div class="card">
+    <div class="hd"><span class="nm">comment</span><span class="cn">评论</span><span class="badge b-ent">实体　→ ER 图中的矩形</span></div>
+    <table>
+      <tr><th>字段</th><th>类型</th><th>键</th><th>说明</th></tr>
+      <tr><td class="f">id</td><td class="t">BIGINT</td><td class="k"><span class="pk">PK</span></td><td class="d">自增主键</td></tr>
+      <tr><td class="f">post_id</td><td class="t">BIGINT</td><td class="k"><span class="fk">FK</span> <span class="nn">NN</span></td><td class="d">所属帖子 → post(id)，级联删除</td></tr>
+      <tr><td class="f">user_id</td><td class="t">BIGINT</td><td class="k"><span class="fk">FK</span> <span class="nn">NN</span></td><td class="d">评论者 → user(id)</td></tr>
+      <tr><td class="f">content</td><td class="t">VARCHAR(1000)</td><td class="k"><span class="nn">NN</span></td><td class="d">评论内容</td></tr>
+      <tr><td class="f">create_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">评论时间</td></tr>
+    </table>
+    <div class="ft">
+      <div class="row"><span class="lbl">上级</span><span><code>post_id</code> → <code>post(id)</code>　<code>user_id</code> → <code>user(id)</code></span></div>
+      <div class="row"><span class="lbl">下级</span><span>无。一级评论，不支持编辑与回复</span></div>
+      <div class="row"><span class="lbl">约束</span><span>索引 <code>idx_comment_post_time (post_id, create_time)</code>；外键 <code>ON DELETE CASCADE</code>（帖子删了评论跟着走）。<b>没有 update_time</b> —— 评论不可改</span></div>
+    </div>
+  </div>
+
+  <!-- ============ post_like ============ -->
+  <div class="card">
+    <div class="hd"><span class="nm">post_like</span><span class="cn">帖子点赞</span><span class="badge b-rel">「点赞」M:N 联系落成的表</span></div>
+    <table>
+      <tr><th>字段</th><th>类型</th><th>键</th><th>说明</th></tr>
+      <tr><td class="f">post_id</td><td class="t">BIGINT</td><td class="k"><span class="pk">PK</span> <span class="fk">FK</span> <span class="nn">NN</span></td><td class="d">被点赞帖子 → post(id)，级联删除</td></tr>
+      <tr><td class="f">user_id</td><td class="t">BIGINT</td><td class="k"><span class="pk">PK</span> <span class="fk">FK</span> <span class="nn">NN</span></td><td class="d">点赞用户 → user(id)</td></tr>
+      <tr><td class="f">create_time</td><td class="t">DATETIME</td><td class="k"><span class="nn">NN</span></td><td class="d">点赞时间</td></tr>
+    </table>
+    <div class="ft">
+      <div class="row"><span class="lbl">上级</span><span><code>post_id</code> → <code>post(id)</code>　<code>user_id</code> → <code>user(id)</code></span></div>
+      <div class="row"><span class="lbl">下级</span><span>无</span></div>
+      <div class="row"><span class="lbl">约束</span><span><b>复合主键 <code>(post_id, user_id)</code></b> —— 不需要额外的唯一约束，「一人一帖一赞」由主键本身保证；索引 <code>idx_post_like_user</code>；两个外键均 <code>ON DELETE CASCADE</code></span></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  <b>三种表的划分依据（答辩可以照着说）：</b><br>
+  ① <b>实体表</b>（user / venue / court / activity / post / comment）—— 有自己独立的代理主键 <code>id</code>，承载独立业务属性，在 ER 图里画<b>矩形</b>。<br>
+  ② <b>联系落成的表</b>（registration / post_like）—— 主键由两端主键组成或等价于它的唯一约束，本质是「关系」而不是「东西」，在 ER 图里画<b>菱形</b>。<br>
+  ③ <b>合并表</b>（reservation）—— 特殊：把「预约」和「占场」两个 M:N 联系合并成一张表，用 <code>user_id</code> / <code>activity_id</code> 二选一来区分，靠 <code>chk_reservation_owner</code> 约束钉死。这是本项目最有设计感的一张表。
+</div>
+
+</body>
+</html>

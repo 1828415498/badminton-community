@@ -4,6 +4,7 @@ import com.badmintoncommunity.common.BusinessException;
 import com.badmintoncommunity.common.PageResult;
 import com.badmintoncommunity.common.ResultCode;
 import com.badmintoncommunity.module.reservation.dto.CreateReservationRequest;
+import com.badmintoncommunity.module.reservation.dto.ReservationReceiptVO;
 import com.badmintoncommunity.module.reservation.dto.ReservationVO;
 import com.badmintoncommunity.module.reservation.entity.Reservation;
 import com.badmintoncommunity.module.reservation.mapper.ReservationMapper;
@@ -186,6 +187,34 @@ public class ReservationService {
     public ReservationVO detail(LoginUser me, Long reservationId) {
         ReservationVO vo = reservationMapper.findVOById(reservationId);
         if (vo == null || vo.getActivityId() != null) {
+            throw new BusinessException(ResultCode.RESERVATION_NOT_FOUND);
+        }
+        boolean isOwner = me.userId().equals(vo.getUserId());
+        boolean isAdmin = me.role() != null && me.role() == 1;
+        if (!isOwner && !isAdmin) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+        return vo;
+    }
+
+    /**
+     * 预约凭证（报表打印用）：数据取自数据库视图 {@code v_reservation_detail}。
+     *
+     * <p><b>权限与 {@link #detail} 完全一致，没有新增任何授权规则</b>：</p>
+     * <ul>
+     *   <li>活动占场行不对外暴露（{@code activity_id != null} 直接按"找不到"处理）；</li>
+     *   <li>只能打自己的预约（{@code isOwner}），管理员可代打任意个人预约（{@code isAdmin}）。</li>
+     * </ul>
+     *
+     * <p>为什么这里不自己拼 JOIN、而是走视图：视图已经把四表关联与两个导出项
+     * （duration_hours / status_text）固化下来，凭证页与将来的管理端台账可以共用同一份查询定义，
+     * 避免"同一段 JOIN 在 Mapper 里抄第二遍、改了一边忘了另一边"。</p>
+     */
+    @Transactional(readOnly = true)
+    public ReservationReceiptVO receipt(LoginUser me, Long reservationId) {
+        ReservationReceiptVO vo = reservationMapper.findReceiptById(reservationId);
+        if (vo == null || vo.getActivityId() != null) {
+            // 不存在 / 非个人行，统一按"找不到"处理（与 detail 一致，不泄露存在性）
             throw new BusinessException(ResultCode.RESERVATION_NOT_FOUND);
         }
         boolean isOwner = me.userId().equals(vo.getUserId());

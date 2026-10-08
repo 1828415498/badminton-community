@@ -23,66 +23,98 @@
  *       分组的意义就没了。球局列表是连续浏览场景。</li>
  * </ol>
  *
- * <h2>后端约束（不可改）</h2>
+ * <h2>排序约定</h2>
  * 公开列表是 `ORDER BY start_time DESC`（最新发布在前）。对"接下来有什么球局"
- * 这是反的，所以在展示层重排（`sortForView`）。后端接口与字段一律不动。
+ * 这是反的，所以在展示层重排（`sortForView`）。
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { listActivities } from '@/api/activity'
-import { AppButton, AppSkeleton, EmptyState, ActivityRow } from '@/components'
+import { AppButton, AppSkeleton, EmptyState } from '@/components'
+import ActivityRow from '@/components/ActivityRow.vue'
 import { iso, parseTime, dayDiff, normTime } from '@/utils/datetime'
 
 const PAGE_SIZE = 20
 
-/** upcoming = 只看得报名中的未来球局；all = 含已结束（后端默认返回 1 与 4） */
-const mode = ref('upcoming')
+const filters = reactive({ keyword: '', status: 'upcoming', startDate: '', endDate: '' })
+// 已提交条件独立保存，编辑表单时不会改变正在浏览的分页结果。
+const applied = ref({ ...filters, upcomingFrom: iso(new Date()) })
 const loading = ref(true)
 const loadingMore = ref(false)
 const list = ref([])
 const total = ref(0)
 const page = ref(1)
+let requestId = 0
 
 const hasMore = computed(() => list.value.length < total.value)
 
-function buildParams() {
-  const p = { page: page.value, page_size: PAGE_SIZE }
-  if (mode.value === 'upcoming') {
+function buildParams(nextPage) {
+  const p = { page: nextPage, page_size: PAGE_SIZE }
+  const { keyword, status, startDate, endDate } = applied.value
+  if (keyword) p.keyword = keyword
+  if (status === 'upcoming') {
     p.status = 1
-    // 用当前时刻而不是今天零点：今天已经打完的球局不该出现在"即将开始"里
-    p.start_from = iso(new Date())
+    p.start_from = applied.value.upcomingFrom
+  } else if (status === 'published') {
+    p.status = 1
+  } else if (status === 'ended') {
+    p.status = 4
   }
+  if (startDate) {
+    const from = `${startDate}T00:00:00`
+    if (!p.start_from || from > p.start_from) p.start_from = from
+  }
+  if (endDate) p.start_to = `${endDate}T23:59:59`
   return p
 }
 
-async function fetchPage(append) {
+async function fetchPage(nextPage, append = false) {
+  const currentRequest = ++requestId
   if (append) loadingMore.value = true
   else loading.value = true
   try {
-    const res = await listActivities(buildParams())
+    const res = await listActivities(buildParams(nextPage))
+    if (currentRequest !== requestId) return
     const rows = res.list || []
     list.value = append ? [...list.value, ...rows] : rows
     total.value = res.total ?? list.value.length
+    page.value = nextPage
   } catch (e) {
+    if (currentRequest !== requestId) return
     if (!append) {
       list.value = []
       total.value = 0
     }
   } finally {
-    loading.value = false
-    loadingMore.value = false
+    if (currentRequest === requestId) {
+      loading.value = false
+      loadingMore.value = false
+    }
   }
 }
 
-function switchMode(next) {
-  if (mode.value === next) return
-  mode.value = next
-  page.value = 1
-  fetchPage(false)
+function search() {
+  if (filters.startDate && filters.endDate && filters.startDate > filters.endDate) {
+    ElMessage.warning('开始日期不能晚于结束日期')
+    return
+  }
+  const now = iso(new Date())
+  if (filters.status === 'upcoming' && filters.endDate && filters.endDate < now.slice(0, 10)) {
+    ElMessage.warning('即将开始的球局不能查询过去的日期，请调整日期或活动状态')
+    return
+  }
+  applied.value = { ...filters, keyword: filters.keyword.trim(), upcomingFrom: now }
+  fetchPage(1)
+}
+
+function resetSearch() {
+  Object.assign(filters, { keyword: '', status: 'all', startDate: '', endDate: '' })
+  search()
 }
 
 function loadMore() {
-  page.value += 1
-  fetchPage(true)
+  if (loading.value || loadingMore.value || !hasMore.value) return
+  fetchPage(page.value + 1, true)
 }
 
 // ---------- 分组 ----------
@@ -129,14 +161,13 @@ const groups = computed(() => {
   return out
 })
 
-/** 已结束的条数：在"全部"模式下作为筛选提示 */
-const pastCount = computed(() => sortForView(list.value).past.length)
-
 const emptyTitle = computed(() =>
-  mode.value === 'upcoming' ? '这几天还没有人开球局' : '还没有任何球局'
+  applied.value.status === 'upcoming' && !applied.value.keyword && !applied.value.startDate && !applied.value.endDate
+    ? '这几天还没有人开球局'
+    : '没有符合条件的球局'
 )
 
-onMounted(() => fetchPage(false))
+onMounted(() => fetchPage(1))
 </script>
 
 <template>
@@ -151,22 +182,37 @@ onMounted(() => fetchPage(false))
       </div>
 
       <div class="head-actions">
-        <div class="segmented" role="group" aria-label="球局范围">
-          <button
-            type="button"
-            :aria-pressed="mode === 'upcoming'"
-            @click="switchMode('upcoming')"
-          >
-            即将开始
-          </button>
-          <button type="button" :aria-pressed="mode === 'all'" @click="switchMode('all')">
-            含已结束
-          </button>
-        </div>
-
         <AppButton to="/activities/new">发起球局</AppButton>
       </div>
     </div>
+
+    <form class="search-panel panel" role="search" @submit.prevent="search">
+      <label class="search-field search-field--keyword">
+        <span>活动名称</span>
+        <el-input v-model="filters.keyword" placeholder="输入标题关键词" clearable maxlength="100" />
+      </label>
+      <label class="search-field search-field--status">
+        <span>活动状态</span>
+        <el-select v-model="filters.status" aria-label="活动状态">
+          <el-option label="即将开始" value="upcoming" />
+          <el-option label="全部" value="all" />
+          <el-option label="已发布" value="published" />
+          <el-option label="已结束" value="ended" />
+        </el-select>
+      </label>
+      <label class="search-field search-field--date">
+        <span>活动日期（从）</span>
+        <el-date-picker v-model="filters.startDate" type="date" value-format="YYYY-MM-DD" placeholder="不限" clearable />
+      </label>
+      <label class="search-field search-field--date">
+        <span>活动日期（至）</span>
+        <el-date-picker v-model="filters.endDate" type="date" value-format="YYYY-MM-DD" placeholder="不限" clearable />
+      </label>
+      <div class="search-actions">
+        <AppButton variant="outline" native-type="submit">查询</AppButton>
+        <AppButton variant="ghost" @click="resetSearch">重置</AppButton>
+      </div>
+    </form>
 
     <!-- 首屏骨架：形状与真实内容一致，避免"先空后跳" -->
     <div v-if="loading" class="panel">
@@ -207,18 +253,15 @@ onMounted(() => fetchPage(false))
       v-else
       :title="emptyTitle"
       :description="
-        mode === 'upcoming'
+        applied.status === 'upcoming' && !applied.keyword && !applied.startDate && !applied.endDate
           ? '你可以第一个发起 —— 场地会被立即锁定，审核通过后其他球友就能报名。'
-          : '发起第一场球，或者去球场预约里自己订一片场地。'
+          : '试试调整关键词、状态或日期范围。'
       "
     >
       <AppButton to="/activities/new">发起球局</AppButton>
       <AppButton variant="outline" to="/venues">去预约场地</AppButton>
     </EmptyState>
 
-    <p v-if="!loading && pastCount && mode === 'upcoming'" class="past-hint">
-      想看已结束的球局，切到「含已结束」。
-    </p>
   </div>
 </template>
 
@@ -228,6 +271,44 @@ onMounted(() => fetchPage(false))
   align-items: center;
   gap: var(--s3);
   flex-wrap: wrap;
+}
+
+.search-panel {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) minmax(130px, 1fr) repeat(2, minmax(155px, 1fr)) auto;
+  gap: var(--s3);
+  align-items: end;
+  padding: var(--s4);
+  margin-bottom: var(--s5);
+}
+
+.search-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.search-field :deep(.el-date-editor),
+.search-field :deep(.el-select) {
+  width: 100%;
+}
+
+.search-field :deep(.el-date-editor) {
+  height: 42px;
+}
+
+.search-field :deep(.el-input__wrapper),
+.search-field :deep(.el-select__wrapper) {
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.search-actions {
+  display: flex;
+  gap: var(--s2);
 }
 
 .sec + .sec {
@@ -257,14 +338,21 @@ onMounted(() => fetchPage(false))
   margin-top: var(--s6);
 }
 
-.past-hint {
-  margin: var(--s5) 0 0;
-  text-align: center;
-  font-size: var(--fs-sm);
-  color: var(--ink-3);
+@media (max-width: 1100px) {
+  .search-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .search-actions {
+    align-self: end;
+  }
 }
 
 @media (max-width: 640px) {
+  .search-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .page-head {
     align-items: stretch;
   }

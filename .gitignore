@@ -46,3 +46,15 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 frontend/*.local
+
+### 文档预览与临时产物 ###
+/tmp/
+/qa-pdf/
+/output/
+~$*
+
+### 本机报告处理脚本与其他课程报告 ###
+/edit_report.ps1
+/3124003040 *.docx
+/专业应用实战-个人实践报告-*.docx
+/专业应用实战-个人实践报告-*.pdf

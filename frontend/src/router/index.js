@@ -32,6 +32,22 @@ const routes = [
     component: () => import('@/views/Register.vue'),
     meta: { public: true, title: '注册' }
   },
+  // ---- 报表打印页 ----
+  // 故意放在 AppLayout 之外：这两页是"一张纸"，页面上没有导航栏与底部 Tab，
+  // 打印时不需要再用 CSS 把一堆界面元素藏起来。权限照旧走下面的登录守卫，
+  // 真正的数据权限由后端 Service 判定。
+  {
+    path: '/print/reservation/:id',
+    name: 'print-reservation',
+    component: () => import('@/views/ReservationReceipt.vue'),
+    meta: { title: '预约凭证' }
+  },
+  {
+    path: '/print/activity/:id/roster',
+    name: 'print-activity-roster',
+    component: () => import('@/views/ActivityRoster.vue'),
+    meta: { title: '活动报名名单' }
+  },
   {
     path: '/',
     component: () => import('@/layouts/AppLayout.vue'),
@@ -100,6 +116,14 @@ const routes = [
         component: () => import('@/views/Profile.vue'),
         meta: { title: '个人资料' }
       },
+      {
+        path: 'admin',
+        name: 'admin',
+        component: () => import('@/views/Admin.vue'),
+        // requiresAdmin：非管理员访问会被守卫送回首页。
+        // 注意这只是体验层面的一道闸，真正的授权判定在后端 Service（认证与授权分离）。
+        meta: { title: '管理台', requiresAdmin: true }
+      },
       ...devRoutes
     ]
   },
@@ -128,6 +152,11 @@ router.beforeEach(async (to) => {
   }
   if (!store.user) {
     return { path: '/login', query: { redirect: to.fullPath } }
+  }
+
+  // 管理台：非管理员直接送回首页（后端仍会独立校验一次，这里不构成安全边界）
+  if (to.meta.requiresAdmin && store.user.role !== 1) {
+    return { path: '/home' }
   }
 
   return true

@@ -2,6 +2,7 @@ package com.badmintoncommunity.module.reservation.mapper;
 
 import com.badmintoncommunity.module.reservation.dto.ActivityCourtRow;
 import com.badmintoncommunity.module.reservation.dto.OccupancySlot;
+import com.badmintoncommunity.module.reservation.dto.ReservationReceiptVO;
 import com.badmintoncommunity.module.reservation.dto.ReservationVO;
 import com.badmintoncommunity.module.reservation.entity.Reservation;
 import org.apache.ibatis.annotations.Insert;
@@ -39,12 +40,28 @@ public interface ReservationMapper {
             + "FROM reservation r JOIN court c ON c.id = r.court_id WHERE r.id = #{id}")
     ReservationVO findVOById(Long id);
 
+    /**
+     * 预约凭证数据（报表打印用）。<b>查的是数据库视图 v_reservation_detail</b>，不是 reservation 表。
+     *
+     * <p>为什么走视图：视图已经把 court / venue / user / activity 四表 JOIN 好，
+     * 并给出 {@code source_type}（个人预约 or 活动占场）、{@code status_text}、
+     * {@code duration_hours} 三个<b>导出项</b> —— 这些在 reservation 表里都没有字段，
+     * 是实时算出来的。查询定义见 {@code sql/views.sql}。</p>
+     *
+     * <p>表名与列名都由视图提供，因此这里不需要再写 JOIN 与 CASE WHEN。</p>
+     */
+    @Select("SELECT reservation_id, court_id, venue_name, court_name, user_id, user_nickname, "
+            + "activity_id, activity_title, owner_display, source_type, "
+            + "start_time, end_time, duration_hours, status, status_text, cancel_time, create_time "
+            + "FROM v_reservation_detail WHERE reservation_id = #{id}")
+    ReservationReceiptVO findReceiptById(Long id);
+
     // ---------- 冲突与上限检查（Service 层先加行锁再调用） ----------
 
-    /** 同一球场与 [start,end) 相交的有效行数（个人与活动来源都算） */
+    /** 同一球场与 [start,end) 相交的有效行数（个人与活动来源都算）；加锁当前读，避免沿用事务的旧快照。 */
     @Select("SELECT COUNT(*) FROM reservation "
             + "WHERE court_id = #{courtId} AND status = 1 "
-            + "  AND start_time < #{end} AND end_time > #{start}")
+            + "  AND start_time < #{end} AND end_time > #{start} FOR UPDATE")
     long countCourtOverlap(@Param("courtId") Long courtId,
                            @Param("start") LocalDateTime start,
                            @Param("end") LocalDateTime end);

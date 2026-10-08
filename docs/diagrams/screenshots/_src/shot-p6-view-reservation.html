@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>v_reservation_detail 查询结果</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;background:#fff;color:#1A1A18;
+    font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+  .wrap{padding:34px 30px;}
+  .card{border:1px solid #D8D6CD;border-radius:12px;overflow:hidden;background:#fff;}
+  .bar{background:#F4F3EE;border-bottom:1px solid #E0DED6;padding:10px 18px;
+    display:flex;align-items:center;gap:9px;font-size:13px;color:#4A4A45;}
+  .dot{width:9px;height:9px;border-radius:50%;background:#D8D6CD;}
+  .obj{font-family:ui-monospace,Consolas,monospace;font-weight:600;font-size:14px;color:#1A1A18;}
+  .obj em{font-style:normal;color:#8A8A82;font-weight:400;font-size:12.5px;margin-left:8px;}
+  .sql{background:#242522;color:#E8E6E0;padding:16px 20px;line-height:1.75;
+    font-family:ui-monospace,Consolas,monospace;font-size:13.5px;white-space:pre-wrap;}
+  .sql .kw{color:#9CCF4F;font-weight:600;}
+  .sql .fn{color:#E8C07A;}
+  table{width:100%;border-collapse:collapse;}
+  th{background:#F4F3EE;text-align:left;padding:10px 15px;font-weight:600;font-size:13px;
+    color:#4A4A45;border-bottom:1px solid #E0DED6;white-space:nowrap;}
+  td{padding:10px 15px;border-bottom:1px solid #EFEDE6;font-size:13.5px;white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+  td.num{font-family:ui-monospace,Consolas,monospace;text-align:center;}
+  td.src{background:#EFFAD0;font-weight:600;}
+  th.src{background:#E5F5BC;}
+  td.owner{background:#EAF2FA;font-weight:600;color:#2F5D80;}
+  th.owner{background:#DFECF7;}
+  .foot{background:#FAFAF7;border-top:1px solid #EFEDE6;padding:9px 18px;
+    font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#8A8A82;}
+  .tip{margin:16px 2px 0;font-size:13px;color:#4A4A45;line-height:1.8;}
+  .tip b{background:#EFFAD0;padding:1px 6px;border-radius:4px;color:#2F3F10;}
+  .tip i{font-style:normal;background:#EAF2FA;padding:1px 6px;border-radius:4px;color:#2F5D80;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="obj">v_reservation_detail<em>视图 · 场地占用台账明细</em></span>
+    </div>
+
+    <div class="sql"><span class="kw">SELECT</span> reservation_id, venue_name, court_name, owner_display,
+       source_type, duration_hours, status_text
+<span class="kw">FROM</span> <span class="fn">v_reservation_detail</span>
+<span class="kw">ORDER BY</span> reservation_id <span class="kw">DESC LIMIT</span> 8;</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:130px">reservation_id</th>
+          <th style="width:170px">venue_name</th>
+          <th style="width:100px">court_name</th>
+          <th class="owner">owner_display</th>
+          <th class="src" style="width:120px">source_type</th>
+          <th style="width:130px">duration_hours</th>
+          <th style="width:100px">status_text</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">14</td><td>星河羽毛球馆</td><td>2 号场</td><td class="owner">小林</td><td class="src">个人预约</td><td class="num">1</td><td>有效</td></tr>
+        <tr><td class="num">13</td><td>星河羽毛球馆</td><td>3 号场</td><td class="owner">阿杰</td><td class="src">个人预约</td><td class="num">1</td><td>有效</td></tr>
+        <tr><td class="num">12</td><td>星河羽毛球馆</td><td>6 号场</td><td class="owner">小明</td><td class="src">个人预约</td><td class="num">1</td><td>有效</td></tr>
+        <tr><td class="num">11</td><td>星河羽毛球馆</td><td>5 号场</td><td class="owner">小林</td><td class="src">个人预约</td><td class="num">1</td><td>有效</td></tr>
+        <tr><td class="num">10</td><td>星河羽毛球馆</td><td>4 号场</td><td class="owner">阿杰</td><td class="src">个人预约</td><td class="num">1</td><td>有效</td></tr>
+        <tr><td class="num">9</td><td>星河羽毛球馆</td><td>1 号场</td><td class="owner">小林</td><td class="src">个人预约</td><td class="num">1</td><td>有效</td></tr>
+        <tr><td class="num">8</td><td>星河羽毛球馆</td><td>2 号场</td><td class="owner">上周五晚固定局</td><td class="src">活动占场</td><td class="num">2</td><td>有效</td></tr>
+        <tr><td class="num">7</td><td>星河羽毛球馆</td><td>1 号场</td><td class="owner">上周五晚固定局</td><td class="src">活动占场</td><td class="num">2</td><td>有效</td></tr>
+      </tbody>
+    </table>
+
+    <div class="foot">8 rows in set (0.003 sec)</div>
+  </div>
+
+  <p class="tip">
+    表里存的全是编号，直接查读不懂。视图把三张表 JOIN 起来，
+    再用 <b>source_type</b> 把两种归属翻成人话、<i>owner_display</i> 把两种占用方合成一列。<br>
+    最后两行是<b>活动占场</b>（占用方是活动），前六行是<b>个人预约</b>（占用方是人）。
+  </p>
+
+</div>
+</body>
+</html>

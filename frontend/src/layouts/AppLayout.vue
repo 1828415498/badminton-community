@@ -39,10 +39,22 @@ const NAV = [
   { to: '/community', label: '社区', icon: 'ChatLineSquare' }
 ]
 
-const MENU = [
-  { cmd: 'reservations', label: '我的预约', icon: 'Calendar' },
-  { cmd: 'profile', label: '个人资料', icon: 'User' }
-]
+/**
+ * 用户菜单。管理台只对管理员出现。
+ *
+ * 入口是否渲染看 role —— 但真正的授权判定在后端 Service（前端隐藏只是
+ * 不让普通用户点进一个必定 403 的页面，不构成安全边界）。
+ */
+const MENU = computed(() => {
+  const items = [
+    { cmd: 'reservations', label: '我的预约', icon: 'Calendar' },
+    { cmd: 'profile', label: '个人资料', icon: 'User' }
+  ]
+  if (store.user?.role === 1) {
+    items.push({ cmd: 'admin', label: '管理台', icon: 'Setting' })
+  }
+  return items
+})
 
 async function handleLogout() {
   await store.logout()
@@ -53,6 +65,7 @@ async function handleLogout() {
 function handleCommand(cmd) {
   if (cmd === 'logout') handleLogout()
   else if (cmd === 'reservations') router.push('/reservations')
+  else if (cmd === 'admin') router.push('/admin')
   else router.push('/profile')
 }
 </script>

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>羽毛球社区管理系统 · 数据表关系图</title>
+<style>
+  :root{
+    --ink:#1A1A18; --ink-2:#4A4A45; --ink-3:#8A8A82;
+    --line:#D8D6CD; --line-2:#E8E6DE; --bg:#FFFFFF; --bg-2:#FAFAF7; --bg-3:#F4F3EE;
+    --rel:#4A6B8A; --rel-u:#B0B6BC;
+    --pk:#1A1A18; --fk:#33638C; --uk:#8A7538;
+    --brand:#B8E62E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    font-size:14px;line-height:1.7;
+  }
+  .wrap{max-width:1500px;margin:0 auto;padding:40px 36px 64px;}
+
+  header.doc{border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:24px;}
+  .eyebrow{font-size:12px;letter-spacing:.14em;color:var(--ink-3);margin-bottom:8px;}
+  h1{font-size:26px;margin:0 0 8px;letter-spacing:-.01em;}
+  .lede{color:var(--ink-2);font-size:14px;margin:0;max-width:760px;}
+
+  .fig{border:1px solid var(--line);border-radius:12px;background:var(--bg-2);padding:14px;overflow:auto;}
+  svg{display:block;width:100%;height:auto;min-width:900px;}
+
+  /* ---------- 卡片 ---------- */
+  .card{fill:#FFFFFF;stroke:var(--line);stroke-width:1;}
+  .hd{fill:var(--bg-3);}
+  .sep{stroke:var(--line-2);stroke-width:1;}
+  .tn{font-size:13.5px;font-weight:600;fill:var(--ink);font-family:ui-monospace,Consolas,monospace;}
+  .tc{font-size:11px;fill:var(--ink-3);}
+  .fn{font-size:12px;fill:#3A3A36;font-family:ui-monospace,Consolas,monospace;}
+  .ft{font-size:11px;fill:#A0A098;font-family:ui-monospace,Consolas,monospace;}
+  .cmt{font-size:10.5px;fill:var(--ink-3);}
+  .k-pk{fill:var(--pk);font-weight:700;}
+  .k-fk{fill:var(--fk);font-weight:600;}
+  .k-uk{fill:var(--uk);font-weight:600;}
+
+  /* ---------- 关系线 ---------- */
+  .rel{fill:none;stroke:var(--rel);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round;}
+  .rel-u{fill:none;stroke:var(--rel-u);stroke-width:1.3;stroke-dasharray:6 4;stroke-linejoin:round;stroke-linecap:round;}
+  .cd{font-size:10.5px;font-weight:700;fill:#6B6B66;}
+  .cd-u{font-size:10.5px;font-weight:700;fill:#A0A098;}
+
+  /* ---------- 图例 / 说明 ---------- */
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 0;}
+  .lg{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);
+      background:var(--bg-3);border:1px solid var(--line);border-radius:999px;padding:4px 12px;}
+  .swatch{width:20px;height:0;border-top-width:2px;border-top-style:solid;}
+  .k{font-family:ui-monospace,monospace;font-weight:700;font-size:11.5px;}
+
+  h2{font-size:17px;margin:44px 0 10px;padding-top:16px;border-top:1px solid var(--line);}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
+  th{background:var(--bg-3);font-weight:600;color:var(--ink-2);white-space:nowrap;}
+  td code{background:var(--bg-3);padding:1px 5px;border-radius:4px;font-size:12px;
+    font-family:ui-monospace,Consolas,monospace;}
+  tr.gone td{color:var(--ink-3);}
+  .strike{text-decoration:line-through;}
+
+  .note{background:#FDF3E7;border:1px solid #EBCFB2;border-radius:8px;padding:11px 15px;
+    margin:14px 0;font-size:13px;color:#6B3A10;}
+  .okbox{background:#EFFAD0;border:1px solid #D6EC9A;border-radius:8px;padding:11px 15px;
+    margin:14px 0;font-size:13px;color:#3A4A18;}
+
+  footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);
+    color:var(--ink-3);font-size:12.5px;}
+
+  @media print{
+    .wrap{max-width:none;padding:0 10mm;}
+    .fig{border:none;background:none;padding:0;}
+    @page{size:A3 landscape;margin:10mm;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <div class="eyebrow">第四节 · 改进后的关系模型（数据表关系图）</div>
+  <h1>羽毛球社区管理系统 · 数据表关系图</h1>
+  <p class="lede">
+    9 张表 · 字段与 <code>sql/schema.sql</code> 逐列对应（含状态码与约束说明）。
+    实线 = 业务主链上的外键；虚线 = 各表对 <code>user</code> 的引用。基数 1 : N。
+  </p>
+</header>
+
+<div class="fig">
+<svg viewBox="0 0 1460 1140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="羽毛球社区管理系统 数据表关系图">
+
+  <!-- ============================================================
+       关系连线（先画，卡片覆盖端点）
+       ============================================================ -->
+
+  <!-- 主链（实线） -->
+  <g class="rel">
+    <path d="M 660 150 L 766 150"/>                                  <!-- activity → registration -->
+    <path d="M 660 390 L 766 390"/>                                  <!-- activity → reservation -->
+    <path d="M 1250 266 L 1250 314"/>                                <!-- venue → court -->
+    <path d="M 1120 410 L 1026 410"/>                                <!-- court → reservation -->
+    <path d="M 660 700 L 700 700 L 700 740 L 766 740"/>              <!-- post → comment -->
+    <path d="M 660 760 L 720 760 L 720 960 L 766 960"/>              <!-- post → post_like -->
+  </g>
+
+  <!-- user 引用（虚线：一条主干 + 四个接入点） -->
+  <g class="rel-u">
+    <path d="M 300 150 L 406 150"/>                                  <!-- user → activity -->
+    <path d="M 300 300 L 360 300 L 360 620 L 406 620"/>              <!-- user → post -->
+    <path d="M 170 90 L 170 50 L 730 50 L 730 990"/>                 <!-- user 引用主干 -->
+    <path d="M 730 120 L 766 120"/>                                  <!-- → registration -->
+    <path d="M 730 440 L 766 440"/>                                  <!-- → reservation -->
+    <path d="M 730 780 L 766 780"/>                                  <!-- → comment -->
+    <path d="M 730 990 L 766 990"/>                                  <!-- → post_like -->
+  </g>
+
+  <!-- 基数标注 -->
+  <g class="cd">
+    <text x="670" y="144">1</text><text x="750" y="144" text-anchor="end">N</text>
+    <text x="670" y="384">1</text><text x="750" y="384" text-anchor="end">N</text>
+    <text x="1258" y="282">1</text><text x="1258" y="308">N</text>
+    <text x="1112" y="404" text-anchor="end">1</text><text x="1038" y="404">N</text>
+    <text x="670" y="694">1</text><text x="756" y="734" text-anchor="end">N</text>
+    <text x="670" y="754">1</text><text x="756" y="954" text-anchor="end">N</text>
+  </g>
+  <g class="cd-u">
+    <text x="308" y="144">1</text><text x="396" y="144" text-anchor="end">N</text>
+    <text x="308" y="294">1</text><text x="396" y="614" text-anchor="end">N</text>
+    <text x="180" y="84">1</text>
+    <text x="744" y="114" text-anchor="end">N</text>
+    <text x="744" y="434" text-anchor="end">N</text>
+    <text x="744" y="774" text-anchor="end">N</text>
+    <text x="744" y="984" text-anchor="end">N</text>
+  </g>
+
+  <!-- ============================================================
+       表卡片
+       ============================================================ -->
+
+  <!-- ===== user ===== -->
+  <g transform="translate(40,90)">
+    <rect class="card" width="260" height="248" rx="8"/>
+    <path class="hd" d="M0 8 A8 8 0 0 1 8 0 H252 A8 8 0 0 1 260 8 V34 H0 Z"/>
+    <text class="tn" x="12" y="23">user</text>
+    <text class="tc" x="248" y="23" text-anchor="end">用户</text>
+    <line class="sep" x1="0" y1="34" x2="260" y2="34"/>
+
+    <text class="fn" x="12" y="51">id</text>
+    <text class="ft" x="248" y="51" text-anchor="end">bigint · <tspan class="k-pk">PK</tspan></text>
+    <text class="fn" x="12" y="75">username</text>
+    <text class="ft" x="248" y="75" text-anchor="end">varchar(64) · <tspan class="k-uk">UK</tspan></text>
+    <text class="fn" x="12" y="99">password_hash</text>
+    <text class="ft" x="248" y="99" text-anchor="end">varchar(255)</text>
+    <text class="fn" x="12" y="123">nickname</text>
+    <text class="ft" x="248" y="123" text-anchor="end">varchar(64)</text>
+    <text class="fn" x="12" y="147">avatar_url</text>
+    <text class="ft" x="248" y="147" text-anchor="end">varchar(255)</text>
+    <text class="fn" x="12" y="171">role</text>
+    <text class="ft" x="248" y="171" text-anchor="end">tinyint</text>
+    <text class="fn" x="12" y="195">create_time</text>
+    <text class="ft" x="248" y="195" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="219">update_time</text>
+    <text class="ft" x="248" y="219" text-anchor="end">datetime</text>
+
+    <text class="cmt" x="12" y="242">role：0 = 普通用户，1 = 管理员</text>
+  </g>
+
+  <!-- ===== activity ===== -->
+  <g transform="translate(400,90)">
+    <rect class="card" width="260" height="368" rx="8"/>
+    <path class="hd" d="M0 8 A8 8 0 0 1 8 0 H252 A8 8 0 0 1 260 8 V34 H0 Z"/>
+    <text class="tn" x="12" y="23">activity</text>
+    <text class="tc" x="248" y="23" text-anchor="end">活动 / 球局</text>
+    <line class="sep" x1="0" y1="34" x2="260" y2="34"/>
+
+    <text class="fn" x="12" y="51">id</text>
+    <text class="ft" x="248" y="51" text-anchor="end">bigint · <tspan class="k-pk">PK</tspan></text>
+    <text class="fn" x="12" y="75">creator_id</text>
+    <text class="ft" x="248" y="75" text-anchor="end">bigint · <tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="99">title</text>
+    <text class="ft" x="248" y="99" text-anchor="end">varchar(100)</text>
+    <text class="fn" x="12" y="123">description</text>
+    <text class="ft" x="248" y="123" text-anchor="end">varchar(2000)</text>
+    <text class="fn" x="12" y="147">start_time</text>
+    <text class="ft" x="248" y="147" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="171">end_time</text>
+    <text class="ft" x="248" y="171" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="195">max_members</text>
+    <text class="ft" x="248" y="195" text-anchor="end">int</text>
+    <text class="fn" x="12" y="219">status</text>
+    <text class="ft" x="248" y="219" text-anchor="end">tinyint</text>
+    <text class="fn" x="12" y="243">reviewer_id</text>
+    <text class="ft" x="248" y="243" text-anchor="end">bigint · <tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="267">review_time</text>
+    <text class="ft" x="248" y="267" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="291">reject_reason</text>
+    <text class="ft" x="248" y="291" text-anchor="end">varchar(255)</text>
+    <text class="fn" x="12" y="315">create_time</text>
+    <text class="ft" x="248" y="315" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="339">update_time</text>
+    <text class="ft" x="248" y="339" text-anchor="end">datetime</text>
+
+    <text class="cmt" x="12" y="362">status：0 待审 1 已发布 2 驳回 3 取消 4 结束</text>
+  </g>
+
+  <!-- ===== registration ===== -->
+  <g transform="translate(760,90)">
+    <rect class="card" width="260" height="200" rx="8"/>
+    <path class="hd" d="M0 8 A8 8 0 0 1 8 0 H252 A8 8 0 0 1 260 8 V34 H0 Z"/>
+    <text class="tn" x="12" y="23">registration</text>
+    <text class="tc" x="248" y="23" text-anchor="end">报名</text>
+    <line class="sep" x1="0" y1="34" x2="260" y2="34"/>
+
+    <text class="fn" x="12" y="51">id</text>
+    <text class="ft" x="248" y="51" text-anchor="end">bigint · <tspan class="k-pk">PK</tspan></text>
+    <text class="fn" x="12" y="75">user_id</text>
+    <text class="ft" x="248" y="75" text-anchor="end">bigint · <tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="99">activity_id</text>
+    <text class="ft" x="248" y="99" text-anchor="end">bigint · <tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="123">status</text>
+    <text class="ft" x="248" y="123" text-anchor="end">tinyint</text>
+    <text class="fn" x="12" y="147">create_time</text>
+    <text class="ft" x="248" y="147" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="171">update_time</text>
+    <text class="ft" x="248" y="171" text-anchor="end">datetime</text>
+
+    <text class="cmt" x="12" y="194">UK(user_id, activity_id)：一人一活动一条</text>
+  </g>
+
+  <!-- ===== reservation ===== -->
+  <g transform="translate(760,340)">
+    <rect class="card" width="260" height="296" rx="8"/>
+    <path class="hd" d="M0 8 A8 8 0 0 1 8 0 H252 A8 8 0 0 1 260 8 V34 H0 Z"/>
+    <text class="tn" x="12" y="23">reservation</text>
+    <text class="tc" x="248" y="23" text-anchor="end">场地占用台账</text>
+    <line class="sep" x1="0" y1="34" x2="260" y2="34"/>
+
+    <text class="fn" x="12" y="51">id</text>
+    <text class="ft" x="248" y="51" text-anchor="end">bigint · <tspan class="k-pk">PK</tspan></text>
+    <text class="fn" x="12" y="75">court_id</text>
+    <text class="ft" x="248" y="75" text-anchor="end">bigint · <tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="99">user_id</text>
+    <text class="ft" x="248" y="99" text-anchor="end">bigint · <tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="123">activity_id</text>
+    <text class="ft" x="248" y="123" text-anchor="end">bigint · <tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="147">start_time</text>
+    <text class="ft" x="248" y="147" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="171">end_time</text>
+    <text class="ft" x="248" y="171" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="195">status</text>
+    <text class="ft" x="248" y="195" text-anchor="end">tinyint</text>
+    <text class="fn" x="12" y="219">cancel_time</text>
+    <text class="ft" x="248" y="219" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="243">create_time</text>
+    <text class="ft" x="248" y="243" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="267">update_time</text>
+    <text class="ft" x="248" y="267" text-anchor="end">datetime</text>
+
+    <text class="cmt" x="12" y="290">user_id / activity_id 二选一（CHECK）</text>
+  </g>
+
+  <!-- ===== post ===== -->
+  <g transform="translate(400,550)">
+    <rect class="card" width="260" height="200" rx="8"/>
+    <path class="hd" d="M0 8 A8 8 0 0 1 8 0 H252 A8 8 0 0 1 260 8 V34 H0 Z"/>
+    <text class="tn" x="12" y="23">post</text>
+    <text class="tc" x="248" y="23" text-anchor="end">帖子</text>
+    <line class="sep" x1="0" y1="34" x2="260" y2="34"/>
+
+    <text class="fn" x="12" y="51">id</text>
+    <text class="ft" x="248" y="51" text-anchor="end">bigint · <tspan class="k-pk">PK</tspan></text>
+    <text class="fn" x="12" y="75">user_id</text>
+    <text class="ft" x="248" y="75" text-anchor="end">bigint · <tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="99">title</text>
+    <text class="ft" x="248" y="99" text-anchor="end">varchar(200)</text>
+    <text class="fn" x="12" y="123">content</text>
+    <text class="ft" x="248" y="123" text-anchor="end">text</text>
+    <text class="fn" x="12" y="147">create_time</text>
+    <text class="ft" x="248" y="147" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="171">update_time</text>
+    <text class="ft" x="248" y="171" text-anchor="end">datetime</text>
+
+    <text class="cmt" x="12" y="194">点赞数不落字段，由 post_like 实时 COUNT</text>
+  </g>
+
+  <!-- ===== comment ===== -->
+  <g transform="translate(760,690)">
+    <rect class="card" width="260" height="176" rx="8"/>
+    <path class="hd" d="M0 8 A8 8 0 0 1 8 0 H252 A8 8 0 0 1 260 8 V34 H0 Z"/>
+    <text class="tn" x="12" y="23">comment</text>
+    <text class="tc" x="248" y="23" text-anchor="end">评论</text>
+    <line class="sep" x1="0" y1="34" x2="260" y2="34"/>
+
+    <text class="fn" x="12" y="51">id</text>
+    <text class="ft" x="248" y="51" text-anchor="end">bigint · <tspan class="k-pk">PK</tspan></text>
+    <text class="fn" x="12" y="75">post_id</text>
+    <text class="ft" x="248" y="75" text-anchor="end">bigint · <tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="99">user_id</text>
+    <text class="ft" x="248" y="99" text-anchor="end">bigint · <tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="123">content</text>
+    <text class="ft" x="248" y="123" text-anchor="end">varchar(1000)</text>
+    <text class="fn" x="12" y="147">create_time</text>
+    <text class="ft" x="248" y="147" text-anchor="end">datetime</text>
+
+    <text class="cmt" x="12" y="170">可删不可改，故无 update_time</text>
+  </g>
+
+  <!-- ===== post_like ===== -->
+  <g transform="translate(760,920)">
+    <rect class="card" width="260" height="128" rx="8"/>
+    <path class="hd" d="M0 8 A8 8 0 0 1 8 0 H252 A8 8 0 0 1 260 8 V34 H0 Z"/>
+    <text class="tn" x="12" y="23">post_like</text>
+    <text class="tc" x="248" y="23" text-anchor="end">点赞</text>
+    <line class="sep" x1="0" y1="34" x2="260" y2="34"/>
+
+    <text class="fn" x="12" y="51">post_id</text>
+    <text class="ft" x="248" y="51" text-anchor="end">bigint · <tspan class="k-pk">PK</tspan>/<tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="75">user_id</text>
+    <text class="ft" x="248" y="75" text-anchor="end">bigint · <tspan class="k-pk">PK</tspan>/<tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="99">create_time</text>
+    <text class="ft" x="248" y="99" text-anchor="end">datetime</text>
+
+    <text class="cmt" x="12" y="122">复合主键，不设代理键</text>
+  </g>
+
+  <!-- ===== venue ===== -->
+  <g transform="translate(1120,90)">
+    <rect class="card" width="260" height="176" rx="8"/>
+    <path class="hd" d="M0 8 A8 8 0 0 1 8 0 H252 A8 8 0 0 1 260 8 V34 H0 Z"/>
+    <text class="tn" x="12" y="23">venue</text>
+    <text class="tc" x="248" y="23" text-anchor="end">场馆</text>
+    <line class="sep" x1="0" y1="34" x2="260" y2="34"/>
+
+    <text class="fn" x="12" y="51">id</text>
+    <text class="ft" x="248" y="51" text-anchor="end">bigint · <tspan class="k-pk">PK</tspan></text>
+    <text class="fn" x="12" y="75">name</text>
+    <text class="ft" x="248" y="75" text-anchor="end">varchar(64)</text>
+    <text class="fn" x="12" y="99">address</text>
+    <text class="ft" x="248" y="99" text-anchor="end">varchar(255)</text>
+    <text class="fn" x="12" y="123">create_time</text>
+    <text class="ft" x="248" y="123" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="147">update_time</text>
+    <text class="ft" x="248" y="147" text-anchor="end">datetime</text>
+
+    <text class="cmt" x="12" y="170">MVP 只有一行</text>
+  </g>
+
+  <!-- ===== court ===== -->
+  <g transform="translate(1120,320)">
+    <rect class="card" width="260" height="200" rx="8"/>
+    <path class="hd" d="M0 8 A8 8 0 0 1 8 0 H252 A8 8 0 0 1 260 8 V34 H0 Z"/>
+    <text class="tn" x="12" y="23">court</text>
+    <text class="tc" x="248" y="23" text-anchor="end">球场</text>
+    <line class="sep" x1="0" y1="34" x2="260" y2="34"/>
+
+    <text class="fn" x="12" y="51">id</text>
+    <text class="ft" x="248" y="51" text-anchor="end">bigint · <tspan class="k-pk">PK</tspan></text>
+    <text class="fn" x="12" y="75">venue_id</text>
+    <text class="ft" x="248" y="75" text-anchor="end">bigint · <tspan class="k-fk">FK</tspan></text>
+    <text class="fn" x="12" y="99">name</text>
+    <text class="ft" x="248" y="99" text-anchor="end">varchar(32)</text>
+    <text class="fn" x="12" y="123">status</text>
+    <text class="ft" x="248" y="123" text-anchor="end">tinyint</text>
+    <text class="fn" x="12" y="147">create_time</text>
+    <text class="ft" x="248" y="147" text-anchor="end">datetime</text>
+    <text class="fn" x="12" y="171">update_time</text>
+    <text class="ft" x="248" y="171" text-anchor="end">datetime</text>
+
+    <text class="cmt" x="12" y="194">status：1 = 可预约，2 = 停用</text>
+  </g>
+
+</svg>
+</div>
+
+<div class="legend">
+  <span class="lg"><span class="k" style="color:#1A1A18">PK</span>主键</span>
+  <span class="lg"><span class="k" style="color:#33638C">FK</span>外键</span>
+  <span class="lg"><span class="k" style="color:#8A7538">UK</span>唯一键</span>
+  <span class="lg"><span class="swatch" style="border-color:#4A6B8A"></span>业务主链上的外键（实线）</span>
+  <span class="lg"><span class="swatch" style="border-color:#B0B6BC;border-top-style:dashed"></span>各表引用 user（虚线）</span>
+  <span class="lg">1 : N 一的一方 → 多的一方</span>
+</div>
+
+<h2>这张图修了什么</h2>
+<p>原图有 5 处字段与 <code>sql/schema.sql</code> 对不上。逐条列出：</p>
+
+<table>
+  <tr><th>#</th><th>原来画的</th><th>问题</th><th>现在</th></tr>
+  <tr class="gone">
+    <td>1</td>
+    <td><code>post.status</code></td>
+    <td>表里<b>没有这一列</b>（post 只有 id / user_id / title / content / create_time / update_time）</td>
+    <td><span class="strike">已删除</span></td>
+  </tr>
+  <tr class="gone">
+    <td>2</td>
+    <td><code>post.like_count</code></td>
+    <td>表里<b>没有这一列</b>。点赞数是"能算出来的量"，属导出项，落在视图 <code>v_post_with_stats</code> 里实时 COUNT</td>
+    <td><span class="strike">已删除</span>，卡片内注明原因</td>
+  </tr>
+  <tr class="gone">
+    <td>3</td>
+    <td><code>reservation.cancel_source</code></td>
+    <td>表里<b>没有这一列</b>，只有 <code>cancel_time</code></td>
+    <td><span class="strike">已删除</span></td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td><code>user</code> 卡片漏字段</td>
+    <td>漏了 <code>avatar_url</code> —— 头像上传功能靠它</td>
+    <td><b>已补上</b></td>
+  </tr>
+  <tr class="gone">
+    <td>5</td>
+    <td><code>user → venue</code> 虚线「管理 / 创建」</td>
+    <td><b>没有任何列支撑</b>：venue 表里没有 created_by 之类的字段</td>
+    <td><span class="strike">已删除</span>（不画没有列支撑的连线）</td>
+  </tr>
+</table>
+
+<div class="note">
+  <b>一条铁律：</b>这张图上的每一条连线，都必须由表里一个真实存在的外键列支撑。<br>
+  反过来说 —— 图里没有画出的外键关系，一律在对应卡片的注释行里写明（例如 <code>post_like</code> 的两列同时是外键）。
+</div>
+
+<h2>怎么用</h2>
+<ul style="font-size:13.5px;line-height:1.9;margin:10px 0;padding-left:20px;">
+  <li><b>放进 PPT（第四节「改进后的关系模型」）</b>：浏览器里直接截图即可，矢量图放大不糊。</li>
+  <li><b>印成 PDF</b>：Ctrl + P → 纸张选 <b>A3 横向</b> → 缩放「适应页面」。</li>
+  <li><b>改字段</b>：这是个纯 HTML 文件，字段行在源码里是成对出现的（字段名 + 类型），改完刷新即可，不需要绘图软件。</li>
+</ul>
+
+<div class="okbox">
+  <b>和另外两份图的分工：</b><br>
+  · 本图 = <b>表卡片 + 外键连线</b>，用于第四节讲"改进后的关系模型"（谁引用谁）。<br>
+  · <code>羽毛球社区-ER图.html</code> = <b>陈氏 ER 图</b>（矩形实体 + 菱形联系），用于第一节讲实体与多对多联系。<br>
+  · <code>羽毛球社区-关系模型明细.html</code> = <b>逐表字段明细</b>，用于第二节讲数据表设计。
+</div>
+
+<footer>
+  数据来源：<code>sql/schema.sql</code>（逐列核对）　|　羽毛球社区管理系统 · 数据库设计交付物
+</footer>
+
+</div>
+</body>
+</html>

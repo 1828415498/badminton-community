@@ -3,6 +3,7 @@ package com.badmintoncommunity.module.reservation.controller;
 import com.badmintoncommunity.common.PageResult;
 import com.badmintoncommunity.common.Result;
 import com.badmintoncommunity.module.reservation.dto.CreateReservationRequest;
+import com.badmintoncommunity.module.reservation.dto.ReservationReceiptVO;
 import com.badmintoncommunity.module.reservation.dto.ReservationVO;
 import com.badmintoncommunity.module.reservation.service.ReservationService;
 import com.badmintoncommunity.security.LoginUser;
@@ -53,6 +54,18 @@ public class ReservationController {
     public Result<ReservationVO> detail(@PathVariable Long id) {
         LoginUser me = UserContext.get();
         return Result.ok(reservationService.detail(me, id));
+    }
+
+    /**
+     * 预约凭证（GET /api/reservations/{id}/receipt）：本人或管理员，供报表打印页取数。
+     *
+     * <p>比 {@code /{id}} 多带场馆名、占用时长、来源与状态文本（都来自 v_reservation_detail 视图）。
+     * 权限判定与 {@code /{id}} 完全一致，由 Service 负责。</p>
+     */
+    @GetMapping("/{id}/receipt")
+    public Result<ReservationReceiptVO> receipt(@PathVariable Long id) {
+        LoginUser me = UserContext.get();
+        return Result.ok(reservationService.receipt(me, id));
     }
 
     /** 取消个人预约（POST /api/reservations/{id}/cancel） */

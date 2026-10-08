@@ -43,9 +43,10 @@ public class ActivityController {
         return Result.ok(activityService.create(UserContext.requireUserId(), req));
     }
 
-    /** 活动列表（GET /api/activities?status=&start_from=&start_to=&page=&page_size=）：匿名可浏览。 */
+    /** 活动列表（可按标题、状态和开始时间范围组合查询）：匿名可浏览。 */
     @GetMapping
     public Result<PageResult<ActivityItemVO>> list(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer status,
             @RequestParam(name = "start_from", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startFrom,
@@ -54,7 +55,7 @@ public class ActivityController {
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "page_size", defaultValue = "20") int pageSize) {
         LoginUser me = UserContext.get();
-        return Result.ok(activityService.listPublic(status, startFrom, startTo, me,
+        return Result.ok(activityService.listPublic(keyword, status, startFrom, startTo, me,
                 Math.max(page, 1), clampSize(pageSize)));
     }
 

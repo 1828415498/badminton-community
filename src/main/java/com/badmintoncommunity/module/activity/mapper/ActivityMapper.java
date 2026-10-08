@@ -65,7 +65,7 @@ public interface ActivityMapper {
 
     /**
      * 按状态集合分页查询（api.md §5.2 公开列表：statuses=[1,4] 或其中一者）。
-     * startFrom / startTo 用于"只看未来活动"等时间窗过滤。
+     * keyword 匹配标题；startFrom / startTo 用于时间窗过滤。
      */
     @Select("<script>"
             + "SELECT a.id, a.title, a.creator_id, u.nickname AS creator_nickname, "
@@ -75,12 +75,14 @@ public interface ActivityMapper {
             + "FROM activity a JOIN `user` u ON u.id = a.creator_id "
             + "WHERE a.status IN "
             + "<foreach collection='statuses' item='s' open='(' separator=',' close=')'>#{s}</foreach> "
+            + "<if test='keyword != null'>AND LOCATE(#{keyword}, a.title) &gt; 0 </if>"
             + "<if test='startFrom != null'>AND a.start_time &gt;= #{startFrom} </if>"
             + "<if test='startTo != null'>AND a.start_time &lt;= #{startTo} </if>"
             + "ORDER BY a.start_time DESC "
             + "LIMIT #{offset}, #{pageSize}"
             + "</script>")
     List<ActivityItemVO> listByStatuses(@Param("statuses") List<Integer> statuses,
+                                        @Param("keyword") String keyword,
                                         @Param("startFrom") LocalDateTime startFrom,
                                         @Param("startTo") LocalDateTime startTo,
                                         @Param("offset") int offset,
@@ -90,10 +92,12 @@ public interface ActivityMapper {
             + "SELECT COUNT(*) FROM activity a "
             + "WHERE a.status IN "
             + "<foreach collection='statuses' item='s' open='(' separator=',' close=')'>#{s}</foreach> "
+            + "<if test='keyword != null'>AND LOCATE(#{keyword}, a.title) &gt; 0 </if>"
             + "<if test='startFrom != null'>AND a.start_time &gt;= #{startFrom} </if>"
             + "<if test='startTo != null'>AND a.start_time &lt;= #{startTo} </if>"
             + "</script>")
     long countByStatuses(@Param("statuses") List<Integer> statuses,
+                         @Param("keyword") String keyword,
                          @Param("startFrom") LocalDateTime startFrom,
                          @Param("startTo") LocalDateTime startTo);
 

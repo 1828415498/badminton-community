@@ -99,6 +99,21 @@ const canSeeMembers = computed(
 )
 
 /**
+ * 打开报名名单打印页（报表打印）。
+ *
+ * 新标签打开：打印页会把整页交给浏览器排版，放在当前标签会打断"列表 → 详情 → 返回"的动线。
+ * 入口只在名单非空时出现 —— 但真正的权限判定在后端 Service，
+ * 前端隐藏入口只是体验优化，不是安全边界。
+ */
+function openRoster() {
+  const { href } = router.resolve({
+    name: 'print-activity-roster',
+    params: { id: activity.value.id }
+  })
+  window.open(href, '_blank', 'noopener')
+}
+
+/**
  * 报名窗口是否还开着：活动已发布，且尚未开始。
  * 后端同样拒绝已开始的球局，这里对齐，避免渲染出"点了必然报错"的按钮。
  */
@@ -379,7 +394,12 @@ onMounted(() => {
 
             <div class="panel-head">
               <h2 class="panel-title">都有谁</h2>
-              <span v-if="members.length" class="meta tnum">{{ members.length }} 人</span>
+              <div class="panel-head__right">
+                <span v-if="members.length" class="meta tnum">{{ members.length }} 人</span>
+                <AppButton v-if="members.length" variant="ghost" size="sm" @click="openRoster">
+                  打印名单
+                </AppButton>
+              </div>
             </div>
 
             <ul v-if="members.length" class="members__list">
@@ -665,6 +685,15 @@ onMounted(() => {
 }
 
 /* ---- 名单 ---- */
+/* 「都有谁」标题行右侧：人数 + 打印名单按钮。
+   用包裹容器而不是给按钮单独加 margin —— 标题行在别处也用到，
+   不依赖它的主轴对齐方式更稳。 */
+.panel-head__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .members__list {
   margin: 0;
   padding: 0;

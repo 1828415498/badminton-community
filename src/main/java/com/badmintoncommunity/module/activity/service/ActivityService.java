@@ -137,9 +137,19 @@ public class ActivityService {
      * 非公开状态（0/2/3）只有管理员能按状态筛选。
      */
     @Transactional(readOnly = true)
-    public PageResult<ActivityItemVO> listPublic(Integer status, LocalDateTime startFrom,
+    public PageResult<ActivityItemVO> listPublic(String keyword, Integer status, LocalDateTime startFrom,
                                                  LocalDateTime startTo, LoginUser me,
                                                  int page, int pageSize) {
+        String titleKeyword = keyword == null ? null : keyword.trim();
+        if (titleKeyword != null && titleKeyword.isEmpty()) {
+            titleKeyword = null;
+        }
+        if (titleKeyword != null && titleKeyword.length() > 100) {
+            throw new BusinessException(ResultCode.PARAM_INVALID, "活动名称关键词不能超过 100 个字符");
+        }
+        if (startFrom != null && startTo != null && startFrom.isAfter(startTo)) {
+            throw new BusinessException(ResultCode.PARAM_INVALID, "开始日期不能晚于结束日期");
+        }
         List<Integer> statuses;
         if (status == null) {
             statuses = PUBLIC_STATUSES;
@@ -155,8 +165,8 @@ public class ActivityService {
             throw new BusinessException(ResultCode.PARAM_INVALID, "status 取值非法");
         }
 
-        long total = activityMapper.countByStatuses(statuses, startFrom, startTo);
-        List<ActivityItemVO> list = activityMapper.listByStatuses(statuses, startFrom, startTo,
+        long total = activityMapper.countByStatuses(statuses, titleKeyword, startFrom, startTo);
+        List<ActivityItemVO> list = activityMapper.listByStatuses(statuses, titleKeyword, startFrom, startTo,
                 (page - 1) * pageSize, pageSize);
         fillCourtIds(list);
         return new PageResult<>(list, total, page, pageSize);
