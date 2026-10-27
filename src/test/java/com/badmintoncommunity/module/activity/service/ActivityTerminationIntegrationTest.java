@@ -2,7 +2,9 @@ package com.badmintoncommunity.module.activity.service;
 
 import com.badmintoncommunity.common.BusinessException;
 import com.badmintoncommunity.common.ResultCode;
+import com.badmintoncommunity.module.registration.service.RegistrationService;
 import com.badmintoncommunity.security.LoginUser;
+import com.badmintoncommunity.support.Concurrency;
 import com.badmintoncommunity.support.IntegrationTestBase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.dao.DataAccessException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -22,6 +25,9 @@ class ActivityTerminationIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private ActivityService activityService;
+
+    @Autowired
+    private RegistrationService registrationService;
 
     @Test
     void rejectionReleasesAllCourtsAndRegistrations() {
@@ -41,6 +47,32 @@ class ActivityTerminationIntegrationTest extends IntegrationTestBase {
         activityService.cancelByCreator(fixture.creatorId(), fixture.activityId());
 
         assertActivityState(fixture.activityId(), 3, 0, 0);
+    }
+
+    @Test
+    void creatorCancellationAndRegistrationCannotLeaveActiveMember() throws Exception {
+        ActivityFixture fixture = activityFixture("cancel-signup",
+                LocalDate.now().plusDays(1).atTime(10, 0), 1);
+        long newMember = fx.user("cancel-signup-new");
+
+        Map<String, Integer> outcome = Concurrency.race(2, i -> i == 0
+                ? cancelAttempt(fixture)
+                : registerAttempt(newMember, fixture.activityId()));
+
+        int registrationSucceeded = outcome.getOrDefault("REGISTER_OK", 0);
+        assertEquals(1, outcome.getOrDefault("CANCEL_OK", 0), outcome.toString());
+        assertEquals(1, registrationSucceeded + outcome.getOrDefault("ACTIVITY_STATE_INVALID", 0),
+                outcome.toString());
+        assertActivityState(fixture.activityId(), 3, 0, 0);
+        assertEquals(registrationSucceeded, fx.countRegistrationRows(newMember, fixture.activityId()),
+                "取消先提交时不得留下新报名行");
+        assertEquals(registrationSucceeded, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM registration WHERE user_id = ? AND activity_id = ? AND status = 2",
+                Long.class, newMember, fixture.activityId()),
+                "报名先提交时，其记录也必须被活动取消作废");
+        BusinessException afterCancellation = assertThrows(BusinessException.class,
+                () -> registrationService.register(newMember, fixture.activityId()));
+        assertEquals(ResultCode.ACTIVITY_STATE_INVALID, afterCancellation.getResultCode());
     }
 
     @Test
@@ -116,6 +148,28 @@ class ActivityTerminationIntegrationTest extends IntegrationTestBase {
 
     private ActivityFixture pendingActivity(String suffix) {
         return activityFixture(suffix, LocalDate.now().plusDays(1).atTime(10, 0), 0);
+    }
+
+    private String cancelAttempt(ActivityFixture fixture) {
+        try {
+            activityService.cancelByCreator(fixture.creatorId(), fixture.activityId());
+            return "CANCEL_OK";
+        } catch (BusinessException ex) {
+            return ex.getResultCode().getCode();
+        } catch (Exception ex) {
+            return "UNEXPECTED:" + ex.getClass().getSimpleName();
+        }
+    }
+
+    private String registerAttempt(long userId, long activityId) {
+        try {
+            registrationService.register(userId, activityId);
+            return "REGISTER_OK";
+        } catch (BusinessException ex) {
+            return ex.getResultCode().getCode();
+        } catch (Exception ex) {
+            return "UNEXPECTED:" + ex.getClass().getSimpleName();
+        }
     }
 
     private ActivityFixture activityFixture(String suffix, LocalDateTime start, int status) {
