@@ -19,6 +19,11 @@ spring:
       maximum-pool-size: 12
       pool-name: badminton-test-pool
 
+app:
+  jwt:
+    # 仅供独立测试库的测试上下文使用，不用于本地运行或部署
+    secret: test-only-jwt-signing-key-with-32-plus-bytes
+
 logging:
   level:
     # 关掉 MyBatis 的 SQL 调试输出，否则 800+ 行刷屏看不到断言失败

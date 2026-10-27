@@ -45,7 +45,15 @@ public class JwtUtil {
     public JwtUtil(JwtProperties props) {
         this.props = props;
         // HS256 要求密钥 >= 32 字节；把配置里的 secret 字符串转成 SecretKey
-        this.key = Keys.hmacShaKeyFor(props.getSecret().getBytes(StandardCharsets.UTF_8));
+        String secret = props.getSecret();
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("缺少 APP_JWT_SECRET：请设置 JWT 签名密钥");
+        }
+        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (secretBytes.length < 32) {
+            throw new IllegalStateException("APP_JWT_SECRET 至少需要 32 字节");
+        }
+        this.key = Keys.hmacShaKeyFor(secretBytes);
     }
 
     /** 签发 token：载荷 = 用户 id（subject）+ 角色（claim），附带签发/过期时间并签名。 */

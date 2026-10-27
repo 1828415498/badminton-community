@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * JWT 配置（app.jwt.*）。开发默认值见 application.yml，上线前改环境变量注入。
+ * JWT 配置（app.jwt.*）。签名密钥由 APP_JWT_SECRET 环境变量提供。
  */
 @Data
 @Component
