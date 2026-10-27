@@ -19,6 +19,7 @@ import com.badmintoncommunity.module.venue.mapper.CourtMapper;
 import com.badmintoncommunity.security.LoginUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -44,7 +45,8 @@ import java.util.stream.Collectors;
  *
  * <h2>加锁顺序（防死锁的硬规则）</h2>
  * <p>多块球场一律按 {@code court_id} <b>升序</b>加锁。若 A 事务按 1→2 锁、B 事务按 2→1 锁，
- * 两者会各持一把、互等对方释放，形成死锁。固定升序可彻底消除这种交叉等待。</p>
+ * 两者会各持一把、互等对方释放，形成死锁。固定升序避免球场行锁逆序；
+ * 空时段冲突查询的间隙锁另由创建事务的 READ COMMITTED 隔离级别规避。</p>
  */
 @Service
 @RequiredArgsConstructor
@@ -66,7 +68,9 @@ public class ActivityService {
      * <p>整个方法是一个事务：任一块球场冲突 → 全部回滚，绝不允许出现
      * "活动建了但只锁到一半球场"的中间状态。</p>
      */
-    @Transactional
+    // 多球场创建会先查空再插入。READ COMMITTED 避免 RR 下冲突查询的间隙锁
+    // 与另一球场的个人预约插入形成死锁；球场行锁仍负责串行化同场写入。
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public ActivityVO create(Long userId, CreateActivityRequest req) {
         LocalDateTime start = req.getStartTime();
         LocalDateTime end = req.getEndTime();

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DisplayName("活动创建与个人预约同时抢场")
 class ActivityReservationConcurrencyTest extends IntegrationTestBase {
@@ -56,21 +57,87 @@ class ActivityReservationConcurrencyTest extends IntegrationTestBase {
         assertEquals(activities, creatorRegistrations, "活动主体与创建者报名必须一起提交");
     }
 
+    @Test
+    @DisplayName("两块场的活动与第二块场的个人预约竞争：活动只能完整成功或完整失败")
+    void multiCourtActivityCommitsAllOrNothingAgainstPersonalReservation() throws Exception {
+        long venueId = fx.venue("multi-venue");
+        long firstCourt = fx.court(venueId, "multi-first", 1);
+        long secondCourt = fx.court(venueId, "multi-second", 1);
+        long creatorId = fx.user("multi-creator");
+        long bookerId = fx.user("multi-booker");
+        LocalDateTime start = LocalDate.now().plusDays(1).atTime(10, 0);
+        LocalDateTime end = start.plusHours(1);
+
+        Map<String, Integer> outcome = Concurrency.race(2, i -> i == 0
+                ? createActivity(creatorId, List.of(secondCourt, firstCourt), start, end)
+                : createReservation(bookerId, secondCourt, start, end));
+
+        int activityWon = outcome.getOrDefault("ACTIVITY_OK", 0);
+        assertEquals(1, activityWon + outcome.getOrDefault("RESERVATION_OK", 0), outcome.toString());
+        assertEquals(1, outcome.getOrDefault("COURT_ALREADY_RESERVED", 0), outcome.toString());
+        assertEquals(activityWon, fx.countActiveReservations(firstCourt, start, end),
+                "活动失败时第一块场不得留下占用");
+        assertEquals(1, fx.countActiveReservations(secondCourt, start, end));
+        assertEquals(activityWon, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM activity WHERE creator_id = ?", Long.class, creatorId));
+        assertEquals(2L * activityWon, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM reservation WHERE activity_id IN "
+                        + "(SELECT id FROM activity WHERE creator_id = ?) AND status = 1",
+                Long.class, creatorId));
+        assertEquals(activityWon, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM registration WHERE user_id = ? AND status = 1",
+                Long.class, creatorId));
+    }
+
+    @Test
+    @DisplayName("第二块场已有个人预约：活动失败后第一块场仍空闲")
+    void conflictOnSecondCourtLeavesNoActivityResources() {
+        long venueId = fx.venue("conflict-venue");
+        long firstCourt = fx.court(venueId, "conflict-first", 1);
+        long secondCourt = fx.court(venueId, "conflict-second", 1);
+        long creatorId = fx.user("conflict-creator");
+        long bookerId = fx.user("conflict-booker");
+        LocalDateTime start = LocalDate.now().plusDays(1).atTime(10, 0);
+        LocalDateTime end = start.plusHours(1);
+        fx.personalReservation(secondCourt, bookerId, start, end, 1);
+
+        BusinessException error = assertThrows(BusinessException.class,
+                () -> activityService.create(creatorId,
+                        activityRequest(List.of(firstCourt, secondCourt), start, end)));
+
+        assertEquals("COURT_ALREADY_RESERVED", error.getResultCode().getCode());
+        assertEquals(0, fx.countActiveReservations(firstCourt, start, end));
+        assertEquals(1, fx.countActiveReservations(secondCourt, start, end));
+        assertEquals(0L, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM activity WHERE creator_id = ?", Long.class, creatorId));
+        assertEquals(0L, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM registration WHERE user_id = ? AND status = 1",
+                Long.class, creatorId));
+    }
+
     private String createActivity(long creatorId, long courtId, LocalDateTime start, LocalDateTime end) {
-        CreateActivityRequest req = new CreateActivityRequest();
-        req.setTitle(Fixtures.MARK + "mixed-race");
-        req.setStartTime(start);
-        req.setEndTime(end);
-        req.setCourtIds(List.of(courtId));
-        req.setMaxMembers(2);
+        return createActivity(creatorId, List.of(courtId), start, end);
+    }
+
+    private String createActivity(long creatorId, List<Long> courtIds, LocalDateTime start, LocalDateTime end) {
         try {
-            activityService.create(creatorId, req);
+            activityService.create(creatorId, activityRequest(courtIds, start, end));
             return "ACTIVITY_OK";
         } catch (BusinessException ex) {
             return ex.getResultCode().getCode();
         } catch (Exception ex) {
             return "UNEXPECTED:" + ex.getClass().getSimpleName();
         }
+    }
+
+    private CreateActivityRequest activityRequest(List<Long> courtIds, LocalDateTime start, LocalDateTime end) {
+        CreateActivityRequest req = new CreateActivityRequest();
+        req.setTitle(Fixtures.MARK + "mixed-race");
+        req.setStartTime(start);
+        req.setEndTime(end);
+        req.setCourtIds(courtIds);
+        req.setMaxMembers(2);
+        return req;
     }
 
     private String createReservation(long bookerId, long courtId, LocalDateTime start, LocalDateTime end) {

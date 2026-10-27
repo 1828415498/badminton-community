@@ -1,6 +1,6 @@
 # 已知缺陷 0001：场地预约并发超卖
 
-> 发现日期：2026-09-17 · 修复验证：2026-09-24 · 状态：**个人预约关键并发场景已修复并通过回归；活动占场路径待单独验证** · 严重级：**高**
+> 发现日期：2026-09-17 · 首次修复验证：2026-09-24 · 状态：**个人预约、活动占场及双球场交错已通过对应回归；更多交错未覆盖** · 严重级：**高**
 > 复现探针：`src/test/java/com/badmintoncommunity/module/reservation/service/ReservationConcurrencyTest.java#onlyOneWinnerForSameSlot`
 > （修复前为红色，现已转绿并保留为回归守卫）
 
@@ -152,25 +152,32 @@ FOR UPDATE
 - 用户亲手修改 `countCourtOverlap` 的 SQL，单独运行 `onlyOneWinnerForSameSlot`：**1 个用例通过，0 失败**。
 - 随后运行预约相关四个测试类：**45 个用例通过，0 失败、0 错误**，包括真实 MySQL 并发测试；整理注释和 SQL 格式后再次运行完整测试：**48 个用例通过，0 失败、0 错误**。
 - 测试启动阶段曾有 `ActivityStatusScheduler` 早于测试表初始化运行的后台日志错误；用例未因此失败，此工程问题另行处理。
-- `ActivityService.create` 也调用同一个冲突查询；共享 SQL 已更新，但**活动占场与个人预约并发争抢的场景尚未有专门测试**。
+- `ActivityService.create` 也调用同一个冲突查询。后续已增加 `ActivityReservationConcurrencyTest`，覆盖单球场与个人预约并发争抢；2026-10-27 又增加双球场活动与个人预约争抢，以及第二块场冲突时不得留下活动资源的用例。
 - 目前只验证了已有测试覆盖的并发与业务规则，不宣称所有部署形态和竞争时序都已经测尽。
 
 ---
 
 ## 7. 影响面
 
-同一个 `create` 模式（`@Transactional` + 先锁主表行 + 再做普通快照读查重）**在 `RegistrationService.register` 里同样存在**：
+`RegistrationService.register` 也采用“锁活动行 → 查报名 → 计数 → 写入”的模式，但它的快照建立时机与预约修复前不同：
 
 ```java
 Activity activity = activityMapper.findByIdForUpdate(activityId);  // 当前读
 // ... 状态校验 ...
-long active = registrationMapper.countActive(activityId);          // 快照读 ← 同一个坑
+Registration existing = registrationMapper.findByUserAndActivity(userId, activityId); // 锁后首次普通读
+long active = registrationMapper.countActive(activityId);          // 沿用上述快照
 if (active >= activity.getMaxMembers()) { throw ... }
 ```
 
-差别在于 `ActivityStatusScheduler`（`@Scheduled fixedDelay=60s`）也会写 `activity`，
-但报名侧的 `countActive` 是否会被同样的快照陈旧影响，**尚未写用例验证**。
-`reservation` 抢场地与 `registration` 抢名额是同一类缺陷，修复方案应一起考虑。
+当前代码在取得 `activity` 行锁后才做第一次普通读，后到事务应能看到先到事务提交的报名行；它没有预约修复前“先建立旧快照、再等锁”的相同执行顺序。报名侧已增加 `RegistrationConcurrencyTest`，覆盖 4 人争最后 1 个名额及取消后重新报名与新报名竞争；这些用例验证了当前实现，但不能证明未来增加锁前普通读或其他事务交错仍安全。
 
 > 注：`registration` 表有 `UNIQUE KEY uk_registration_user_activity (user_id, activity_id)`，
 > 能挡住"同一用户重复报名"，但挡不住"名额超卖"（不同用户各报一行）。
+
+---
+
+## 8. 2026-10-27：双球场交错暴露范围锁死锁
+
+新增双球场活动与个人预约竞争第二块场的测试后，完整测试出现一次 `{RESERVATION_OK=1, UNEXPECTED:DeadlockLoserDataAccessException=1}`。MySQL `SHOW ENGINE INNODB STATUS` 显示：活动事务持有 `idx_reservation_court_time` 上的空范围锁，等待第二块 `court` 行；个人预约持有该 `court` 行，插入 `reservation` 时等待上述索引间隙，形成循环等待。数据库回滚活动事务，未出现重复占场，但调用方收到数据库异常，而非业务冲突码。
+
+仅将个人预约和活动创建两个写入占场的事务设为 `READ COMMITTED`；保留球场行锁和 `countCourtOverlap` 的 `FOR UPDATE`。该隔离级别下，普通查询每次读取最新已提交版本，锁定读通常不取得搜索间隙锁（外键与唯一性检查除外）。同一球场仍由 `court` 行锁串行化。修改后，双球场测试、已有并发测试以及完整后端测试 67 个用例通过。测试证明了覆盖场景的结果，不代表所有数据库死锁已消除。

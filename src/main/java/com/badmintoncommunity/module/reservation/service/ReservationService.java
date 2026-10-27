@@ -14,6 +14,7 @@ import com.badmintoncommunity.module.venue.mapper.CourtMapper;
 import com.badmintoncommunity.security.LoginUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
@@ -50,7 +51,9 @@ public class ReservationService {
     /**
      * 创建个人预约。流程见类注释；任一步失败抛业务异常并整体回滚。
      */
-    @Transactional
+    // 与活动创建使用相同隔离级别，避免空时段 FOR UPDATE 的间隙锁阻塞其他球场的插入。
+    // 同一球场仍由 court 行锁排队，冲突查询仍用当前读。
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public ReservationVO create(Long userId, CreateReservationRequest req) {
         LocalDateTime start = req.getStartTime();
         LocalDateTime end = req.getEndTime();
