@@ -58,9 +58,9 @@ public class Fixtures {
     /**
      * 造一个活动。status：0=待审核，1=已发布，2=已驳回，3=已取消，4=已结束。
      *
-     * <p>⚠️ 若造 status=1 的活动，调用方必须保证 {@code endTime} 晚于当前时刻，否则
-     * ActivityStatusScheduler 会把它的状态刷成 4（该任务按 fixedDelay=60s 跑，
-     * 测试基类虽已尝试取消它，但夹具自身也保持这个不变量更稳妥）。</p>
+     * <p>⚠️ 若造 status=1 的活动，调用方仍应保证 {@code endTime} 晚于当前时刻，
+     * 保持夹具符合业务状态。生产环境的 ActivityStatusScheduler 会把过期活动刷成 4；
+     * 测试 profile 在启动时不注册该任务。</p>
      */
     public long activity(long creatorId, String suffix, LocalDateTime start, LocalDateTime end,
                          int maxMembers, int status) {

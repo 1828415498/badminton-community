@@ -3,6 +3,7 @@ package com.badmintoncommunity.module.activity.scheduler;
 import com.badmintoncommunity.module.activity.mapper.ActivityMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ import java.time.LocalDateTime;
  */
 @Slf4j
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 public class ActivityStatusScheduler {
 

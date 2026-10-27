@@ -1,7 +1,10 @@
 package com.badmintoncommunity.support;
 
+import com.badmintoncommunity.module.activity.scheduler.ActivityStatusScheduler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 import java.util.HashSet;
 import java.util.List;
@@ -13,16 +16,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * 测试地基自检。
  *
- * <p>这一组用例不测业务，它测的是<b>"测试本身可不可信"</b>。整套测试的价值都建立在这三件事上，
+ * <p>这一组用例不测业务，它测的是<b>"测试本身可不可信"</b>。整套测试的价值都建立在这些条件上，
  * 一旦其中一条悄悄失效，后面所有绿都会变成假绿：</p>
  * <ol>
  *   <li>连的确实是独立测试库（否则在建表第一步就已经把开发库删了）；</li>
  *   <li>表与视图都是按 {@code sql/schema.sql} + {@code sql/views.sql} 建的（否则测的是一个和线上不一样的库）；</li>
  *   <li>夹具造得出、也删得掉（否则用例互相污染，失败原因会指向错误的地方）。</li>
+ *   <li>活动定时任务不在测试启动时注册（否则可能在建表期间查询数据库）。</li>
  * </ol>
  */
 @DisplayName("测试地基自检")
 class TestFoundationTest extends IntegrationTestBase {
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     private static final Set<String> EXPECTED_TABLES = Set.of(
             "user", "venue", "court", "activity", "reservation",
@@ -38,6 +45,13 @@ class TestFoundationTest extends IntegrationTestBase {
     private static final Set<String> EXPECTED_VIEWS = Set.of(
             "v_reservation_detail", "v_activity_signup_detail",
             "v_post_with_stats", "v_activity_signup_stat");
+
+    @Test
+    @DisplayName("测试上下文启动时不注册活动定时任务")
+    void activitySchedulerIsAbsentInTestProfile() {
+        assertTrue(applicationContext.getBeansOfType(ActivityStatusScheduler.class).isEmpty(),
+                "测试环境必须在启动阶段禁用定时任务，@BeforeEach 再取消已太晚");
+    }
 
     @Test
     @DisplayName("连的是独立测试库，不是开发库")

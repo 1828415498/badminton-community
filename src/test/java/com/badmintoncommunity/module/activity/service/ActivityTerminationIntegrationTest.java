@@ -104,7 +104,7 @@ class ActivityTerminationIntegrationTest extends IntegrationTestBase {
 
     @Test
     void adminCanCancelAlreadyStartedActivity() {
-        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime start = LocalDateTime.now().minusMinutes(30);
         ActivityFixture fixture = activityFixture("admin-cancel", start, 1);
         long adminId = fx.user("admin-cancel-admin");
         jdbc.update("UPDATE `user` SET role = 1 WHERE id = ?", adminId);
