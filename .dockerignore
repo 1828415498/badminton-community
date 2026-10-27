@@ -1,0 +1,10 @@
+.git
+.idea
+.mvn
+target
+frontend
+uploads
+docs
+*.md
+.env
+.env.*

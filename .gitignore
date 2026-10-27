@@ -40,6 +40,7 @@ fix-mysql-service.ps1
 
 ### 用户上传的文件（运行时产物，不是源码） ###
 uploads/
+.env
 
 ### 前端（frontend/） ###
 frontend/node_modules/
