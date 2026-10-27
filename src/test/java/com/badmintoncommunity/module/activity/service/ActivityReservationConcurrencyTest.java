@@ -19,7 +19,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@DisplayName("活动创建与个人预约同时抢场")
+@DisplayName("活动与预约占场并发竞争")
 class ActivityReservationConcurrencyTest extends IntegrationTestBase {
 
     @Autowired
@@ -113,6 +113,41 @@ class ActivityReservationConcurrencyTest extends IntegrationTestBase {
         assertEquals(0L, jdbc.queryForObject(
                 "SELECT COUNT(*) FROM registration WHERE user_id = ? AND status = 1",
                 Long.class, creatorId));
+    }
+
+    @Test
+    @DisplayName("两个多球场活动只共享一块场：恰好一个完整创建，失败方不留资源")
+    void overlappingMultiCourtActivitiesCommitOnlyOneCompleteActivity() throws Exception {
+        long venueId = fx.venue("overlap-venue");
+        long leftCourt = fx.court(venueId, "overlap-left", 1);
+        long sharedCourt = fx.court(venueId, "overlap-shared", 1);
+        long rightCourt = fx.court(venueId, "overlap-right", 1);
+        long leftCreator = fx.user("overlap-left-creator");
+        long rightCreator = fx.user("overlap-right-creator");
+        LocalDateTime start = LocalDate.now().plusDays(1).atTime(10, 0);
+        LocalDateTime end = start.plusHours(1);
+
+        Map<String, Integer> outcome = Concurrency.race(2, i -> i == 0
+                ? createActivity(leftCreator, List.of(sharedCourt, leftCourt), start, end)
+                : createActivity(rightCreator, List.of(rightCourt, sharedCourt), start, end));
+
+        assertEquals(1, outcome.getOrDefault("ACTIVITY_OK", 0), outcome.toString());
+        assertEquals(1, outcome.getOrDefault("COURT_ALREADY_RESERVED", 0), outcome.toString());
+        long leftCreated = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM activity WHERE creator_id = ?", Long.class, leftCreator);
+        long rightCreated = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM activity WHERE creator_id = ?", Long.class, rightCreator);
+        assertEquals(1L, leftCreated + rightCreated, "失败方不能留下活动主体");
+        assertEquals(leftCreated, fx.countActiveReservations(leftCourt, start, end));
+        assertEquals(1, fx.countActiveReservations(sharedCourt, start, end));
+        assertEquals(rightCreated, fx.countActiveReservations(rightCourt, start, end));
+        assertEquals(2L, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM reservation WHERE activity_id IN "
+                        + "(SELECT id FROM activity WHERE creator_id IN (?, ?)) AND status = 1",
+                Long.class, leftCreator, rightCreator));
+        assertEquals(leftCreated + rightCreated, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM registration WHERE user_id IN (?, ?) AND status = 1",
+                Long.class, leftCreator, rightCreator));
     }
 
     private String createActivity(long creatorId, long courtId, LocalDateTime start, LocalDateTime end) {
