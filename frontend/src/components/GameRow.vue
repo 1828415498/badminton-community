@@ -30,7 +30,8 @@
  *   over     已结束        → 描边徽标，整行降级
  */
 import { computed } from 'vue'
-import { AppBadge, AppButton } from '@/components'
+import AppBadge from './AppBadge.vue'
+import AppButton from './AppButton.vue'
 import { parseTime, pad } from '@/utils/datetime'
 
 const props = defineProps({

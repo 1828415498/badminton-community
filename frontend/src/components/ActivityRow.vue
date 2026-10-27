@@ -12,7 +12,8 @@
  * 那才是用户下决心的地方。加入动作归详情页所有。
  */
 import { computed } from 'vue'
-import { AppBadge, StatNumber } from '@/components'
+import AppBadge from './AppBadge.vue'
+import StatNumber from './StatNumber.vue'
 import { parseTime, dayName, pad } from '@/utils/datetime'
 
 const props = defineProps({
