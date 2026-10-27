@@ -6,6 +6,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -71,13 +72,16 @@ public class TestSchemaBootstrap implements ApplicationRunner {
             "registration", "post", "comment", "post_like");
 
     private final DataSource dataSource;
+    private final Environment environment;
 
-    public TestSchemaBootstrap(DataSource dataSource) {
+    public TestSchemaBootstrap(DataSource dataSource, Environment environment) {
         this.dataSource = dataSource;
+        this.environment = environment;
     }
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
+        requireTestDatabaseCredentials();
         try (Connection conn = dataSource.getConnection()) {
             guardAgainstWrongDatabase(conn);
 
@@ -104,6 +108,17 @@ public class TestSchemaBootstrap implements ApplicationRunner {
             }
             log.info("测试库已按 {} 重建完成，共执行 {} 条 DDL（库：{}）",
                     String.join(" + ", SCHEMA_FILES), statements.size(), conn.getCatalog());
+        }
+    }
+
+    /** 缺少测试库凭据时明确失败，避免把未解析的占位符当作 MySQL 用户名去连接。 */
+    private void requireTestDatabaseCredentials() {
+        String user = environment.getProperty("TEST_DB_USER");
+        String password = environment.getProperty("TEST_DB_PASSWORD");
+        if (user == null || user.isBlank() || password == null || password.isBlank()) {
+            throw new IllegalStateException(
+                    "Missing TEST_DB_USER or TEST_DB_PASSWORD. Set both to non-empty values before tests; "
+                            + "schema bootstrap recreates tables and views in badminton_community_test.");
         }
     }
 

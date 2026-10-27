@@ -50,7 +50,7 @@ MySQL 数据保存在 `mysql_data` 卷，图片保存在 `uploads_data` 卷。�
 | `APP_UPLOAD_DIR` | 图片存储目录 | `./uploads`，相对于启动目录 |
 | `SERVER_PORT` | HTTP 端口 | `8080` |
 
-本地 PowerShell 设置示例见 [README](../README.md#本地运行)。重启后端时须保留同一 JWT 密钥，否则之前签发的令牌会失效。自动化测试使用 `application-test.yml` 中的独立测试库配置及测试专用签名密钥；测试库会由测试引导程序重建，不要指向开发库或共享库。
+本地 PowerShell 设置示例见 [README](../README.md#本地运行)。重启后端时须保留同一 JWT 密钥，否则之前签发的令牌会失效。自动化测试使用独立的 `badminton_community_test` 库及测试专用签名密钥；运行前须设置 `TEST_DB_USER`、`TEST_DB_PASSWORD`（参见 [README](../README.md)）。测试引导程序会重建测试库业务表和视图，不要指向开发库或共享库。
 
 ## 已验证范围与边界
 

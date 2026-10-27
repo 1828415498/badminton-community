@@ -58,7 +58,15 @@ Redis、MQ、ES 和分布式锁**尚未接入**。仓库提供 Docker Compose �
 
 后端默认使用 `http://localhost:8080`，前端开发服务默认使用 `http://localhost:5173`，Vite 将 `/api` 请求代理到后端。SQL 初始化的管理员账号只供本地演示，首次部署前务必修改密码。
 
-运行自动化测试需先启动 MySQL；测试配置使用独立的 `badminton_community_test` 数据库及测试专用 JWT 密钥，不应指向开发库。运行 `.\mvnw.cmd test` 前请核对 [测试配置](src/test/resources/application-test.yml)。
+运行自动化测试需先启动 MySQL，并在运行测试的 PowerShell 终端显式设置测试库账号和密码：
+
+```powershell
+$env:TEST_DB_USER = "<测试库 MySQL 用户>"
+$env:TEST_DB_PASSWORD = "<测试库 MySQL 密码>"
+.\mvnw.cmd test
+```
+
+[测试配置](src/test/resources/application-test.yml)固定连接独立的 `badminton_community_test` 库，不读取后端运行用的 `DB_USER` / `DB_PASSWORD`。测试启动会重建该库的业务表和视图，账号需有建库、建表、删表和建视图权限；不要使用开发库或共享库。测试专用 JWT 密钥仅用于测试上下文。
 
 ## Docker Compose 本地部署
 
@@ -67,7 +75,7 @@ Compose 编排前端、后端和 MySQL，并用独立卷保存数据库和上传
 ## 当前待完善事项
 
 - 继续验证尚未覆盖的报名取消与重报等并发交错，以及更多活动多场地组合。
-- 将测试库的本地默认凭据迁移为独立配置，并补充容器环境的活动占场与个人预约交错验证。
+- Docker Desktop 恢复后补充容器环境的活动占场与个人预约交错验证。
 - 根据实际读取热点和通知需求，再决定是否引入 Redis、MQ 等组件；不把计划中的技术写成已完成能力。
 - 同步过时文档与真实代码，避免设计稿被误认为当前实现。
 
