@@ -48,6 +48,8 @@ Redis、MQ、ES 和分布式锁**尚未接入**。仓库提供 Docker Compose �
    java -jar target/backend-0.0.1-SNAPSHOT.jar
    ```
 
+   若受限 Windows 终端把 Maven 用户目录错误识别为 `C:\`，并报无法创建 `C:\.m2\repository`，可先在该终端执行 `$env:MAVEN_OPTS = "-Duser.home=$env:USERPROFILE"`，再运行 `mvnw.cmd`。正常环境不需要这一步。
+
 4. 另开终端启动前端：
 
    ```powershell
