@@ -169,7 +169,7 @@ long active = registrationMapper.countActive(activityId);          // 沿用上�
 if (active >= activity.getMaxMembers()) { throw ... }
 ```
 
-当前代码在取得 `activity` 行锁后才做第一次普通读，后到事务应能看到先到事务提交的报名行；它没有预约修复前“先建立旧快照、再等锁”的相同执行顺序。报名侧已增加 `RegistrationConcurrencyTest`，覆盖 4 人争最后 1 个名额、取消后重新报名与新报名竞争、取消与新报名交错，以及拒绝后重试；这些用例验证了当前实现，但不能证明未来增加锁前普通读或其他事务交错仍安全。
+当前代码在取得 `activity` 行锁后才做第一次普通读，后到事务应能看到先到事务提交的报名行；它没有预约修复前“先建立旧快照、再等锁”的相同执行顺序。报名侧已增加 `RegistrationConcurrencyTest`，覆盖 4 人争最后 1 个名额、取消后重新报名与新报名竞争、取消与新报名交错、同一成员取消与重报时另一成员争名额，以及拒绝后重试；这些用例验证了当前实现，但不能证明未来增加锁前普通读或其他事务交错仍安全。三方竞争用例只断言不超员、报名行不重复和结果码合法；同时起跑并不能保证所有先后顺序都执行到。
 
 > 注：`registration` 表有 `UNIQUE KEY uk_registration_user_activity (user_id, activity_id)`，
 > 能挡住"同一用户重复报名"，但挡不住"名额超卖"（不同用户各报一行）。

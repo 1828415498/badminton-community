@@ -16,6 +16,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("活动报名最后名额并发")
 class RegistrationConcurrencyTest extends IntegrationTestBase {
@@ -118,6 +119,43 @@ class RegistrationConcurrencyTest extends IntegrationTestBase {
         assertEquals(1, jdbc.queryForObject(
                 "SELECT COUNT(*) FROM registration WHERE user_id = ? AND activity_id = ? AND status = 2",
                 Long.class, leavingMember, activityId));
+    }
+
+    @Test
+    @DisplayName("同一成员取消与重报、另一成员争名额同时发生时，报名行和容量保持一致")
+    void cancellationRejoinAndNewRegistrationKeepOnePlaceConsistent() throws Exception {
+        long creator = fx.user("three-way-creator");
+        long member = fx.user("three-way-member");
+        long newcomer = fx.user("three-way-newcomer");
+        long activityId = publishedActivity(creator, "three-way-place", 2);
+        fx.registration(creator, activityId, 1);
+        fx.registration(member, activityId, 1);
+
+        Map<String, Integer> outcome = Concurrency.race(3, i -> switch (i) {
+            case 0 -> cancelAttempt(member, activityId);
+            case 1 -> "REJOIN_" + attempt(member, activityId, "OK");
+            default -> "NEW_" + attempt(newcomer, activityId, "OK");
+        });
+
+        assertEquals(1, outcome.getOrDefault("CANCEL_OK", 0), outcome.toString());
+        assertEquals(1, outcome.getOrDefault("REJOIN_OK", 0)
+                + outcome.getOrDefault("REJOIN_ACTIVITY_FULL", 0), outcome.toString());
+        assertEquals(1, outcome.getOrDefault("NEW_OK", 0)
+                + outcome.getOrDefault("NEW_ACTIVITY_FULL", 0), outcome.toString());
+        assertEquals(3, outcome.values().stream().mapToInt(Integer::intValue).sum(), outcome.toString());
+
+        assertEquals(1, fx.countRegistrationRows(member, activityId), "取消与重报不能产生第二条历史行");
+        assertEquals(outcome.getOrDefault("NEW_OK", 0).longValue(),
+                fx.countRegistrationRows(newcomer, activityId), "新成员被拒绝时不能留下报名行");
+        long memberActive = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM registration WHERE user_id = ? AND activity_id = ? AND status = 1",
+                Long.class, member, activityId);
+        long newcomerActive = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM registration WHERE user_id = ? AND activity_id = ? AND status = 1",
+                Long.class, newcomer, activityId);
+        long active = fx.countActiveRegistrations(activityId);
+        assertEquals(1L + memberActive + newcomerActive, active, "有效人数须与每条报名行一致");
+        assertTrue(active <= 2, "三方争抢不能超过活动人数上限");
     }
 
     private long publishedActivity(long creator, String suffix, int maxMembers) {
