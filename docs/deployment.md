@@ -31,7 +31,7 @@ docker compose ps
 
 访问 `http://127.0.0.1:8088`，或检查 `http://127.0.0.1:8088/api/venues`。首次创建空的 MySQL 卷时，镜像按 `schema.sql`、`views.sql`、`data.sql` 顺序初始化；示例管理员 `admin123 / 123456` 仅用于本机演示。请勿把该默认账号直接暴露在公网。
 
-MySQL 数据保存在 `mysql_data` 卷，图片保存在 `uploads_data` 卷。可以登录后通过“个人中心”上传图片，再执行 `docker compose restart`，检查场馆、登录及图片 URL 仍可访问。`docker compose down` 仅停止并删除容器，保留这两个卷；`docker compose down --volumes` **会删除业务数据和上传文件**，不要用于保留数据的环境。数据库初始化 SQL 只会在空卷首次启动时运行，后续结构修改需要单独迁移，不会自动重灌。
+MySQL 数据保存在 `mysql_data` 卷，图片保存在 `uploads_data` 卷。可以登录后通过“个人中心”上传图片，再执行 `docker compose restart` 和 `docker compose up -d --wait`，等数据库及后端健康检查通过后，检查场馆、登录及图片 URL 仍可访问。单独执行 `restart` 返回时，后端可能尚未重新连上数据库，此时立即请求可能短暂失败。`docker compose down` 仅停止并删除容器，保留这两个卷；`docker compose down --volumes` **会删除业务数据和上传文件**，不要用于保留数据的环境。数据库初始化 SQL 只会在空卷首次启动时运行，后续结构修改需要单独迁移，不会自动重灌。
 
 预约主流程也可以按以下顺序验收：注册两个普通账号，选明天的一块空闲球场和整点 1 小时时段；账号 A 创建预约，账号 B 创建同一时段应得到 `COURT_ALREADY_RESERVED`；检查 A 的预约凭证；重启服务后确认 A 的“我的预约”仍有该记录且 B 仍被拒绝；A 取消后 B 应能预约，球场占用查询最终只应有一条该时段的有效占用。请在独立演示库执行，避免往真实业务库写入验收账号和预约。
 
@@ -61,3 +61,9 @@ MySQL 数据保存在 `mysql_data` 卷，图片保存在 `uploads_data` 卷。�
 2026-10-15 核查前端告警：`ActivityRow` 和 `GameRow` 不再通过导出自身的组件统一出口导入同级组件，生产构建的循环依赖警告已消失。当时 `package-lock.json` 将传递依赖 `source-map-js` 从 `1.2.1` 更新至修复版 `1.2.2`；官方 npm registry 审计为 0 项，前端生产构建和 Docker 前端镜像构建通过。
 
 2026-10-27 重新核查时，新增的安全公告让旧锁文件出现 5 项高危审计告警。锁文件内的 Vite、Puppeteer、`follow-redirects` 及其传递依赖更新后，官方 npm registry 干净安装、前端生产构建和审计均通过，审计为 0 项；Puppeteer 可以启动本机 Chrome。**超过 500 KB 的分包提示仍存在**，本轮没有测量页面加载性能。Nginx 的后端代理改为通过 Docker DNS 动态解析服务名，以适应后端容器重建；本机 Docker Desktop 4.89.0 因启动时无法处理旧的 `sailor-ingest.sock` 文件而未能启动，所以这项代理改动和更新后的容器镜像在 10 月 27 日尚未做运行验收，不能沿用 10 月 15 日的镜像构建结果声称它们已验证。
+
+2026-10-29 基于 GitHub 匿名克隆的 `a1a5dfa` 在独立 Compose 项目 `badminton-community-verification-20261028` 从空卷构建并启动三项服务；本轮的后端健康检查及前端依赖条件也在该克隆副本中应用后验收。MySQL 初始化出 6 块球场和 4 个视图；首页与场馆接口经 `127.0.0.1:8088` 返回成功。两个新账号按顺序验证个人预约：A 预约成功，B 同场同时段得到 `COURT_ALREADY_RESERVED`，A 的凭证显示 1 小时；三服务重启后 A 仍能登录并查到原预约，B 仍被拒绝；A 取消后 B 预约成功，占用接口最终只返回该时段 1 条有效占用。上传 1 张 PNG 后，经统一入口读取的内容在三服务重启前后与源文件 SHA-256 一致。
+
+首次重启验收在 `docker compose restart` 返回后立即登录，遇到一次 HTTP 500；后端日志显示 `UnknownHostException: db`，稍后接口自行恢复。原因是此前 Compose 只确认后端容器正在运行，没有等待其数据库链路可用。本轮给后端增加访问场馆接口的健康检查，并让前端等待后端健康；随后以 `docker compose up -d --wait` 等待就绪，再执行同一预约和上传流程，均通过。此验证覆盖顺序请求与重启持久化，**没有进行容器内并发争抢或 Vue 页面交互验收**。
+
+本机 Docker Desktop 4.89.0 启动前需要备份损坏的旧运行时 socket 目录；首次镜像构建时，配置的 `docker.xuanyuan.me` 镜像站返回 403，官方 Docker Registry 认证地址在本机超时，因此这次构建临时只使用 `docker.1ms.run`。这些是本机 Docker 环境与网络条件，不属于仓库的自动配置；其他机器的镜像可达性仍需按当地网络验证。
